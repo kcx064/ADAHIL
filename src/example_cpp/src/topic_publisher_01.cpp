@@ -2,6 +2,13 @@
 #include "std_msgs/msg/string.hpp"
 #include "posix/spi.h"
 
+extern "C"{
+	#include "fadd.h"
+	// #include "mchilmodel.h"
+	#include "libsimodel.h"
+}
+
+
 #define spi0_device		"/dev/spidev0.0"
 
 class TopicPublisher01 : public rclcpp::Node, public SPI
@@ -44,12 +51,14 @@ public:
 		reg_data = RegisterRead(0x05);
 		printf("data read is: %d\n", reg_data);
 
+		fadd_initialize();
+		libsimodel_initialize();
 
 		// 创建发布者
         command_publisher_ = this->create_publisher<std_msgs::msg::String>("command", 10);
 		// 创建定时器，500ms为周期，定时发布
 		//milliseconds表示毫秒  microseconds表示微妙
-        timer_ = this->create_wall_timer(std::chrono::milliseconds(1000), std::bind(&TopicPublisher01::timer_callback, this));
+        timer_ = this->create_wall_timer(std::chrono::microseconds(500), std::bind(&TopicPublisher01::timer_callback, this));
     }
 
 private:
@@ -70,11 +79,22 @@ private:
 		buffer.Accel_data[4] = 5;
 		buffer.Accel_data[5] = 6;
 		SensorDataBurstWrite(buffer);
+		
+		//
+		// fadd_U.x = 1;
+		// fadd_U.y = 2;
+		// fadd_step();
+		// printf("add output is: %f\n",fadd_Y.z);
+
+		//
+		libsimodel_U.inPWMs[0] = 0;
+		libsimodel_step();
+
         // 创建消息
         std_msgs::msg::String message;
         message.data = "forward";
         // 日志打印
-        RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
+        // RCLCPP_INFO(this->get_logger(), "Publishing: '%s'", message.data.c_str());
         // 发布消息
         command_publisher_->publish(message);
     }
