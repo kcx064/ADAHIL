@@ -1,0 +1,14 @@
+uint8 gyrox_h
+uint8 gyrox_l
+uint8 gyroy_h
+uint8 gyroy_l
+uint8 gyroz_h
+uint8 gyroz_l
+uint8 temp_h
+uint8 temp_l
+uint8 accelx_h
+uint8 accelx_l
+uint8 accely_h
+uint8 accely_l
+uint8 accelz_h
+uint8 accelz_l
