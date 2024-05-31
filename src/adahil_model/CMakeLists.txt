@@ -10,6 +10,15 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(adahil_interface REQUIRED)
 
+string(ASCII 27 Esc) # Esc \033 八进制的27即Esc
+set(Green "${Esc}[0;32m")   #Green
+find_library(SIMODEL_LIB simodel_win64 PATHS ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+message("${Green}Found dynamic link library success: ${SIMODEL_LIB}")
+
+include_directories(
+	${CMAKE_CURRENT_SOURCE_DIR}/include/adahil_model/
+)
+
 add_executable(sim_model src/sim_model.cpp)
 target_include_directories(sim_model PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -20,9 +29,14 @@ ament_target_dependencies(
   "rclcpp"
   "adahil_interface"
 )
+target_link_libraries(sim_model ${SIMODEL_LIB})
 
 install(TARGETS sim_model
   DESTINATION lib/${PROJECT_NAME})
+
+install(DIRECTORY launch
+DESTINATION share/${PROJECT_NAME})
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
