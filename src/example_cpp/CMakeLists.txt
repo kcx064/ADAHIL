@@ -67,6 +67,9 @@ install(TARGETS
   topic_publisher_01
   DESTINATION lib/${PROJECT_NAME}
 )
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}
+)
 
 # node: subscribe_01
 add_executable(topic_subscribe_01 src/topic_subscribe_01.cpp)
