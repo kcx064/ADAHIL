@@ -7,7 +7,12 @@ ros2 launch adahil_model run_sim_model.py & PID1=$!
 sleep 5s
 
 ros2 launch adahil_sensor_send run_sensor_send.py & PID2=$!
+sleep 5s
+
+# ros2 launch example_cpp run_topic_pub.py & PID3=$!
 
 wait
-kill -9 PID1 PID2 & 
+kill -9 PID1 & 
+kill -9 PID2 & 
+# kill -9 PID3 & 
 exit
