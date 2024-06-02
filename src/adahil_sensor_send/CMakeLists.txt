@@ -10,11 +10,16 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(adahil_interface REQUIRED)
 
-add_executable(sensor_send src/sensor_send.cpp)
+add_executable(sensor_send 
+	src/sensor_send.cpp
+	src/spi.cpp
+)
+
 target_include_directories(sensor_send PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
 target_compile_features(sensor_send PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
+
 ament_target_dependencies(
   sensor_send
   "rclcpp"
