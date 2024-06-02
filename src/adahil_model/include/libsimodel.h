@@ -3,9 +3,9 @@
  *
  * Code generated for Simulink model 'libsimodel'.
  *
- * Model version                  : 1.490
+ * Model version                  : 1.493
  * Simulink Coder version         : 9.5 (R2021a) 14-Nov-2020
- * C/C++ source code generated on : Sun May 26 11:45:14 2024
+ * C/C++ source code generated on : Sun Jun  2 22:11:12 2024
  *
  * Target selection: ert_shrlib.tlc
  * Embedded hardware selection: ARM Compatible->ARM Cortex-A
@@ -149,30 +149,6 @@ typedef struct {
 
 #endif
 
-#ifndef DEFINED_TYPEDEF_FOR_MavLinkStateQuat_
-#define DEFINED_TYPEDEF_FOR_MavLinkStateQuat_
-
-typedef struct {
-  uint32_T time_usec;
-  real32_T attitude_quaternion[4];
-  real32_T rollspeed;
-  real32_T pitchspeed;
-  real32_T yawspeed;
-  int32_T lat;
-  int32_T lon;
-  int32_T alt;
-  int16_T vx;
-  int16_T vy;
-  int16_T vz;
-  uint16_T ind_airspeed;
-  uint16_T true_airspeed;
-  int16_T xacc;
-  int16_T yacc;
-  int16_T zacc;
-} MavLinkStateQuat;
-
-#endif
-
 /* Block states (default storage) for system '<S111>/Negative Trace' */
 typedef struct {
   int8_T FindMaximumDiagonalValue_Active;
@@ -195,58 +171,26 @@ typedef struct {
   real_T dv[40];
   MavVehileInfo BusCreator2;           /* '<S259>/Bus Creator2' */
   real_T MatrixConcatenation[18];      /* '<S217>/Matrix Concatenation' */
-  real_T VectorConcatenate_o[9];       /* '<S47>/Vector Concatenate' */
   real_T J_rt[9];                      /* '<S3>/AirframeFunction' */
-  real_T VectorConcatenate_m[9];       /* '<S300>/Vector Concatenate' */
+  real_T VectorConcatenate_o[9];       /* '<S47>/Vector Concatenate' */
   real_T VectorConcatenate[9];
   real_T VectorConcatenate_k[9];
-  real_T dv1[9];
   real_T A[9];
-  real_T rtb_Integrator_j_m[8];
-  real_T TmpRTBAtgps_location_noiseOutpo[6];/* '<S303>/gps_location_noise' */
+  real_T rtb_Integrator_m[8];
   real_T MatrixMultiply[6];            /* '<S210>/MatrixMultiply' */
-  real32_T MotorRPMS[8];               /* '<S259>/Data Type Conversion26' */
-  real_T TmpSignalConversionAtq0q1q2q3_a[4];/* '<S215>/qdot' */
-  real_T Sum2[3];                      /* '<S312>/Sum2' */
-  real_T Sum4_f[3];                    /* '<S307>/Sum4' */
-  real_T Sum2_n[3];                    /* '<S325>/Sum2' */
-  real_T Sum2_o[3];                    /* '<S368>/Sum2' */
-  real_T Sum4_c[3];                    /* '<S365>/Sum4' */
-  real_T Sum2_d[3];                    /* '<S371>/Sum2' */
-  real_T RandomNumber2[3];             /* '<S305>/Random Number2' */
-  real_T gps_noise[6];                 /* '<S303>/gps_location_noise' */
   real_T F_wind[3];
-  real_T ZeroOrderHold3_a[3];          /* '<S307>/Zero-Order Hold3' */
-  real_T ubvbwb[3];                    /* '<S214>/ub,vb,wb' */
-  real_T Vector1[3];                   /* '<S2>/MATLAB Function' */
-  real_T Vector2[3];                   /* '<S2>/MATLAB Function' */
-  real_T IntegratorSecondOrderLimi_g[3];
-                                 /* '<S368>/Integrator, Second-Order Limited' */
-  real_T tmpForInput[3];
   real_T CMP_rt[3];                    /* '<S3>/AirframeFunction' */
+  real_T Sum_ej[3];                    /* '<S326>/Sum' */
   real_T V_wind_b_relative[3];         /* '<S11>/MATLAB Function' */
-  real_T IntegratorSecondOrderLimi_f[3];
-                                 /* '<S368>/Integrator, Second-Order Limited' */
+  real_T IntegratorSecondOrderLimi_n[3];
+                                 /* '<S371>/Integrator, Second-Order Limited' */
+  real_T Sum_lv[3];                    /* '<S304>/Sum' */
+  real_T IntegratorSecondOrderLimi_h[3];
+                                 /* '<S325>/Integrator, Second-Order Limited' */
   real_T Product_lt[3];                /* '<S365>/Product' */
-  real_T ZeroOrderHold1[3];            /* '<S365>/Zero-Order Hold1' */
-  real_T Xe[3];
-  real_T Ve[3];
-  real32_T AccB[3];                    /* '<S259>/Data Type Conversion23' */
-  real_T Uk1;                          /* '<S8>/Delay Input1' */
-  real_T Uk1_l;                        /* '<S7>/Delay Input1' */
-  real_T Switch;                       /* '<S345>/Switch' */
-  real_T Switch_m;                     /* '<S346>/Switch' */
-  real_T Sum1;                         /* '<S338>/Sum1' */
-  real_T q0;                           /* '<S225>/q0' */
-  real_T q1;                           /* '<S225>/q1' */
-  real_T q2;                           /* '<S225>/q2' */
-  real_T q3;                           /* '<S225>/q3' */
-  real_T Product[3];                   /* '<S222>/Product' */
-  real_T Sum1_d[3];                    /* '<S303>/Sum1' */
-  real_T Normalization[3];             /* '<S20>/Normalization' */
-  real_T Normalization_c[3];           /* '<S21>/Normalization' */
+  real_T xeyeze[3];
+  real_T rtb_IntegratorSecondOrderLim_cl[3];
   real_T runnedTime;                   /* '<S15>/Digital Clock' */
-  real_T Merge[4];                     /* '<S261>/Merge' */
   real_T ModelInit_motorInitRate_b;    /* '<S62>/ModelInit_motorInitRate' */
   real_T ModelInit_motorInitRate_j;    /* '<S63>/ModelInit_motorInitRate' */
   real_T ModelInit_motorInitRate_c;    /* '<S64>/ModelInit_motorInitRate' */
@@ -255,16 +199,20 @@ typedef struct {
   real_T ModelInit_motorInitRate_n;    /* '<S67>/ModelInit_motorInitRate' */
   real_T ModelInit_motorInitRate_i;    /* '<S68>/ModelInit_motorInitRate' */
   real_T ModelInit_motorInitRate_ni;   /* '<S69>/ModelInit_motorInitRate' */
-  real_T Merge_e[4];                   /* '<S112>/Merge' */
+  real_T q0;                           /* '<S225>/q0' */
+  real_T q1;                           /* '<S225>/q1' */
+  real_T q2;                           /* '<S225>/q2' */
+  real_T q3;                           /* '<S225>/q3' */
+  real_T Product[3];                   /* '<S222>/Product' */
+  real_T Merge[4];                     /* '<S112>/Merge' */
   real_T Merge_d[4];                   /* '<S111>/Merge' */
   real_T SumofElements[3];             /* '<S253>/Sum of Elements' */
-  real_T Sum_h[3];                     /* '<S214>/Sum' */
+  real_T Uk1;                          /* '<S8>/Delay Input1' */
+  real_T Uk1_l;                        /* '<S7>/Delay Input1' */
+  real_T Normalization[3];             /* '<S20>/Normalization' */
+  real_T Normalization_c[3];           /* '<S21>/Normalization' */
   real_T q;                            /* '<S26>/q' */
   real_T q_f;                          /* '<S29>/q' */
-  real_T Switch_b;                     /* '<S99>/Switch' */
-  real_T TrigonometricFunction1;       /* '<S105>/Trigonometric Function1' */
-  real_T TrigonometricFunction2;       /* '<S105>/Trigonometric Function2' */
-  real_T Switch_m5;                    /* '<S100>/Switch' */
   real_T Selector1[9];                 /* '<S216>/Selector1' */
   real_T Selector[9];                  /* '<S216>/Selector' */
   real_T Selector2[9];                 /* '<S216>/Selector2' */
@@ -286,6 +234,17 @@ typedef struct {
   real_T RandomNumber_i[3];            /* '<S305>/Random Number' */
   real_T Product_d[3];                 /* '<S305>/Product' */
   real_T Delay_n[3];                   /* '<S305>/Delay' */
+  real_T TmpRTBAtgps_location_noiseOutpo[6];/* '<S303>/gps_location_noise' */
+  real_T Switch;                       /* '<S345>/Switch' */
+  real_T Switch_m;                     /* '<S346>/Switch' */
+  real_T Sum1_e;                       /* '<S338>/Sum1' */
+  real_T Sum1_d[3];                    /* '<S303>/Sum1' */
+  real_T Merge_o[4];                   /* '<S261>/Merge' */
+  real_T Sum_h[3];                     /* '<S214>/Sum' */
+  real_T Switch_b;                     /* '<S99>/Switch' */
+  real_T TrigonometricFunction1;       /* '<S105>/Trigonometric Function1' */
+  real_T TrigonometricFunction2;       /* '<S105>/Trigonometric Function2' */
+  real_T Switch_m5;                    /* '<S100>/Switch' */
   real_T Divide;                       /* '<S71>/Divide' */
   real_T Divide_j;                     /* '<S73>/Divide' */
   real_T Divide_m;                     /* '<S75>/Divide' */
@@ -294,6 +253,15 @@ typedef struct {
   real_T Divide_l;                     /* '<S81>/Divide' */
   real_T Divide_b;                     /* '<S83>/Divide' */
   real_T Divide_a;                     /* '<S85>/Divide' */
+  real_T TmpSignalConversionAtq0q1q2q3_a[4];/* '<S215>/qdot' */
+  real_T Sum2[3];                      /* '<S312>/Sum2' */
+  real_T Sum4_f[3];                    /* '<S307>/Sum4' */
+  real_T Sum2_n[3];                    /* '<S325>/Sum2' */
+  real_T Sum2_o[3];                    /* '<S368>/Sum2' */
+  real_T Sum4_c[3];                    /* '<S365>/Sum4' */
+  real_T Sum2_d[3];                    /* '<S371>/Sum2' */
+  real_T RandomNumber2[3];             /* '<S305>/Random Number2' */
+  real_T gps_noise[6];                 /* '<S303>/gps_location_noise' */
   real_T vel;                          /* '<S303>/GenCogVel' */
   real_T cot;                          /* '<S303>/GenCogVel' */
   real_T F1[3];                        /* '<S87>/Ground Model' */
@@ -307,64 +275,87 @@ typedef struct {
   real_T Merge_h;                      /* '<S242>/Merge' */
   real_T Merge_b;                      /* '<S53>/Merge' */
   real32_T TmpSignalConversionAtPayLoadInp[27];
-  real_T scale;
-  real_T absxk;
-  real_T t;
-  real_T jxi_b;                        /* '<S333>/j x i' */
-  real_T ixk;                          /* '<S333>/i x k' */
-  real_T Product1_kx;                  /* '<S209>/Product1' */
-  real_T Integrator_n;                 /* '<S85>/Integrator' */
-  real_T kxj;                          /* '<S333>/k x j' */
-  real_T TrigonometricFunction1_c;     /* '<S357>/Trigonometric Function1' */
-  real_T Fcn1;                         /* '<S27>/Fcn1' */
-  real_T Integrator_i;                 /* '<S81>/Integrator' */
-  real_T Integrator_l;                 /* '<S79>/Integrator' */
+  real_T Integrator;                   /* '<S71>/Integrator' */
+  real_T Integrator_c;                 /* '<S73>/Integrator' */
   real_T Integrator_h;                 /* '<S75>/Integrator' */
-  real_T Integrator;                   /* '<S73>/Integrator' */
-  real_T Integrator_j;                 /* '<S71>/Integrator' */
-  real_T q1dot;                        /* '<S226>/q1dot' */
+  real_T Integrator_a;                 /* '<S77>/Integrator' */
+  real_T Integrator_l;                 /* '<S79>/Integrator' */
+  real_T Integrator_i;                 /* '<S81>/Integrator' */
+  real_T Integrator_k;                 /* '<S83>/Integrator' */
+  real_T Integrator_n;                 /* '<S85>/Integrator' */
+  real_T jxi_h;                        /* '<S252>/j x i' */
+  real_T Product1_aq;                  /* '<S52>/Product1' */
+  real_T kxj_a;                        /* '<S252>/k x j' */
+  real_T Theta;                        /* '<S29>/Theta' */
+  real_T fcn3;                         /* '<S224>/fcn3' */
+  real_T q3dot;                        /* '<S226>/q3dot' */
   real_T ixj;                          /* '<S332>/i x j' */
-  real_T xeyeze_idx_2;
-  real_T xeyeze_idx_1;
-  real_T xeyeze_idx_0;
-  real_T rtb_Sum_ej_idx_2;
-  real_T rtb_Sum_ej_idx_1;
-  real_T rtb_Sum_ej_idx_0;
+  real_T q0dot;                        /* '<S226>/q0dot' */
+  real_T Product_mq;                   /* '<S302>/Product' */
+  real_T rtb_IntegratorSecondOrderLimi_k;
+  real_T rtb_IntegratorSecondOrderLim_cx;
+  real_T rtb_IntegratorSecondOrderLimi_b;
+  real_T rtb_IntegratorSecondOrderLimi_p;
+  real_T rtb_IntegratorSecondOrderLim_cv;
+  real_T rtb_IntegratorSecondOrderLimi_f;
+  real_T rtb_ubvbwb_idx_2;
+  real_T pqr_idx_2;
+  real_T rtb_ubvbwb_idx_1;
+  real_T pqr_idx_1;
+  real_T rtb_ubvbwb_idx_0;
+  real_T pqr_idx_0;
+  real_T rtb_ZeroOrderHold3_a_idx_2;
+  real_T rtb_ZeroOrderHold3_a_idx_1;
+  real_T rtb_ZeroOrderHold3_a_idx_0;
   real_T rtb_q0q1q2q3_idx_3;
+  real_T rtb_q0q1q2q3_idx_2;
+  real_T rtb_q0q1q2q3_idx_1;
+  real_T rtb_q0q1q2q3_idx_0;
   real_T rtb_Product1_l_idx_2;
-  real_T rtb_ImpAsg_InsertedFor_F_at_i_k;
-  real_T rtb_ImpAsg_InsertedFor_F_at_i_c;
-  real_T rtb_ImpAsg_InsertedFor_F_at_i_b;
-  real_T rtb_Euler_idx_2;
-  real_T rtb_Euler_idx_1;
-  real_T rtb_Euler_idx_0;
+  real_T rtb_ImpAsg_InsertedFor_F_at_i_g;
+  real_T rtb_ImpAsg_InsertedFor_F_at__g1;
+  real_T rtb_ImpAsg_InsertedFor_F_at_i_m;
+  real_T rtb_Vector1_idx_2;
+  real_T rtb_Vector1_idx_1;
+  real_T rtb_Vector1_idx_0;
   real_T rtb_Sum_j_idx_2;
   real_T rtb_Sum_j_idx_1;
   real_T rtb_Sum_j_idx_0;
-  real_T rtb_Sum_mv_idx_0;
-  real_T rtb_Fcn1_tmp;
-  real_T absxk_tmp;
-  real_T t_tmp;
-  real_T t_tmp_p;
+  real_T rtb_M_env_idx_2;
+  real_T rtb_M_env_idx_1;
+  real_T rtb_M_env_idx_0;
+  real_T rtb_VectorConcatenate_idx_0;
+  real_T q0_tmp;
+  real_T rtb_ixk_h_tmp;
+  real_T rtb_VectorConcatenate_o_tmp;
+  real_T rtb_Vector2_idx_2;
+  real_T rtb_Vector2_idx_1;
+  real_T rtb_Vector2_idx_0;
+  real_T rtb_ZeroOrderHold1_idx_2;
+  real_T rtb_ZeroOrderHold1_idx_1;
+  real_T rtb_ZeroOrderHold1_idx_0;
+  real_T rtb_M_env_idx_0_tmp;
+  real_T rtb_M_env_idx_1_tmp;
+  real_T rtb_M_env_idx_2_tmp;
+  real_T VectorConcatenate_tmp_tmp;
+  real_T rtb_Product1_l_idx_2_tmp;
+  real_T rtb_M_env_idx_1_tmp_n;
   real_T maxval;
   real_T a21;
   int32_T TmpSignalConversionAtPayLoadI_j[2];
-  real32_T rtb_BusCreator_o_xmag;
-  real32_T rtb_BusCreator_o_ymag;
-  real32_T rtb_BusCreator_o_zmag;
-  real32_T rtb_BusCreator_o_abs_pressure;
-  real32_T rtb_AngQuatern_idx_3;
-  real32_T rtb_AngQuatern_idx_2;
-  real32_T rtb_AngQuatern_idx_1;
-  real32_T rtb_AngQuatern_idx_0;
+  real32_T abs_pressure;               /* '<S258>/Gain' */
   real32_T rtb_Ameans0_idx_2;
   real32_T rtb_Ameans0_idx_1;
   real32_T rtb_Ameans0_idx_0;
   real32_T rtb_Wmeans0_idx_2;
   real32_T rtb_Wmeans0_idx_1;
+  real32_T rtb_Wmeans0_idx_0;
+  real32_T rtb_Gain4_idx_2;
+  real32_T rtb_Gain4_idx_1;
   int32_T copterID;                    /* '<S259>/Data Type Conversion16' */
   int32_T vehicleType;                 /* '<S259>/Data Type Conversion17' */
   int32_T i;
+  uint32_T time_usec;                  /* '<S15>/Data Type Conversion' */
   uint8_T fix_type;                    /* '<S257>/Data Type Conversion3' */
   uint8_T satellites_visible;          /* '<S257>/Data Type Conversion16' */
   uint8_T PackageHead[8];              /* '<S60>/Package Head' */
@@ -387,7 +378,6 @@ typedef struct {
   real_T Delay_DSTATE[300];            /* '<S301>/Delay' */
   real_T Delay_DSTATE_p[300];          /* '<S304>/Delay' */
   real_T Delay_DSTATE_k[300];          /* '<S305>/Delay' */
-  real_T TmpRTBAtgps_location_noiseOutpo[6];/* synthesized block */
   real_T Product2_DWORK4[9];           /* '<S216>/Product2' */
   real_T NextOutput[3];                /* '<S301>/Random Number5' */
   real_T NextOutput_k[3];              /* '<S301>/Random Number4' */
@@ -395,6 +385,7 @@ typedef struct {
   real_T NextOutput_p[3];              /* '<S304>/Random Number' */
   real_T NextOutput_g[3];              /* '<S305>/Random Number' */
   real_T NextOutput_j;                 /* '<S302>/Random Number' */
+  real_T TmpRTBAtgps_location_noiseOutpo[6];/* synthesized block */
   real_T NextOutput_i[3];              /* '<S305>/Random Number2' */
   real_T index;                        /* '<S303>/gps_location_noise' */
   real_T cot_buf;                      /* '<S303>/GenCogVel' */
@@ -405,7 +396,6 @@ typedef struct {
   uint32_T RandSeed_pg[3];             /* '<S305>/Random Number' */
   uint32_T RandSeed_d;                 /* '<S302>/Random Number' */
   uint32_T RandSeed_c[3];              /* '<S305>/Random Number2' */
-  int_T q0q1q2q3_IWORK;                /* '<S215>/q0 q1 q2 q3' */
   int_T Integrator_IWORK;              /* '<S71>/Integrator' */
   int_T Integrator_IWORK_d;            /* '<S73>/Integrator' */
   int_T Integrator_IWORK_h;            /* '<S75>/Integrator' */
@@ -414,6 +404,7 @@ typedef struct {
   int_T Integrator_IWORK_k4;           /* '<S81>/Integrator' */
   int_T Integrator_IWORK_b;            /* '<S83>/Integrator' */
   int_T Integrator_IWORK_ba;           /* '<S85>/Integrator' */
+  int_T q0q1q2q3_IWORK;                /* '<S215>/q0 q1 q2 q3' */
   int_T IntegratorSecondOrderLimited_MO[3];
                                  /* '<S312>/Integrator, Second-Order Limited' */
   int_T IntegratorSecondOrderLimited__h[3];
@@ -425,10 +416,10 @@ typedef struct {
   int16_T RateTransition1_Buffer[3];   /* '<S1>/Rate Transition1' */
   int16_T RateTransition4_Buffer[3];   /* '<S1>/Rate Transition4' */
   int8_T If_ActiveSubsystem;           /* '<S242>/If' */
-  int8_T If_ActiveSubsystem_a;         /* '<S53>/If' */
-  int8_T If_ActiveSubsystem_b;         /* '<S261>/If' */
   int8_T If_ActiveSubsystem_d;         /* '<S112>/If' */
   int8_T If_ActiveSubsystem_o;         /* '<S111>/If' */
+  int8_T If_ActiveSubsystem_a;         /* '<S53>/If' */
+  int8_T If_ActiveSubsystem_b;         /* '<S261>/If' */
   int8_T If1_ActiveSubsystem;          /* '<S120>/If1' */
   int8_T If1_ActiveSubsystem_f;        /* '<S158>/If1' */
   int8_T If1_ActiveSubsystem_o;        /* '<S264>/If1' */
@@ -450,11 +441,8 @@ typedef struct {
 
 /* Continuous states (default storage) */
 typedef struct {
-  real_T xeyeze_CSTATE[3];             /* '<S214>/xe,ye,ze' */
-  real_T q0q1q2q3_CSTATE[4];           /* '<S215>/q0 q1 q2 q3' */
-  real_T ubvbwb_CSTATE[3];             /* '<S214>/ub,vb,wb' */
-  real_T Theta_CSTATE;                 /* '<S26>/Theta' */
-  real_T Theta_CSTATE_b;               /* '<S29>/Theta' */
+  real_T IntegratorSecondOrderLimited_CS[6];
+                                 /* '<S312>/Integrator, Second-Order Limited' */
   real_T Integrator_CSTATE;            /* '<S71>/Integrator' */
   real_T Integrator_CSTATE_a;          /* '<S73>/Integrator' */
   real_T Integrator_CSTATE_p;          /* '<S75>/Integrator' */
@@ -463,11 +451,14 @@ typedef struct {
   real_T Integrator_CSTATE_mb;         /* '<S81>/Integrator' */
   real_T Integrator_CSTATE_f;          /* '<S83>/Integrator' */
   real_T Integrator_CSTATE_fl;         /* '<S85>/Integrator' */
+  real_T ubvbwb_CSTATE[3];             /* '<S214>/ub,vb,wb' */
   real_T pqr_CSTATE[3];                /* '<S214>/p,q,r ' */
+  real_T q0q1q2q3_CSTATE[4];           /* '<S215>/q0 q1 q2 q3' */
+  real_T xeyeze_CSTATE[3];             /* '<S214>/xe,ye,ze' */
+  real_T Theta_CSTATE;                 /* '<S26>/Theta' */
+  real_T Theta_CSTATE_b;               /* '<S29>/Theta' */
   real_T q_CSTATE;                     /* '<S26>/q' */
   real_T q_CSTATE_e;                   /* '<S29>/q' */
-  real_T IntegratorSecondOrderLimited_CS[6];
-                                 /* '<S312>/Integrator, Second-Order Limited' */
   real_T IntegratorSecondOrderLimited__j[6];
                                  /* '<S368>/Integrator, Second-Order Limited' */
   real_T IntegratorSecondOrderLimited__a[6];
@@ -482,11 +473,8 @@ typedef real_T PeriodicRngX_libsimodel_T[4];
 
 /* State derivatives (default storage) */
 typedef struct {
-  real_T xeyeze_CSTATE[3];             /* '<S214>/xe,ye,ze' */
-  real_T q0q1q2q3_CSTATE[4];           /* '<S215>/q0 q1 q2 q3' */
-  real_T ubvbwb_CSTATE[3];             /* '<S214>/ub,vb,wb' */
-  real_T Theta_CSTATE;                 /* '<S26>/Theta' */
-  real_T Theta_CSTATE_b;               /* '<S29>/Theta' */
+  real_T IntegratorSecondOrderLimited_CS[6];
+                                 /* '<S312>/Integrator, Second-Order Limited' */
   real_T Integrator_CSTATE;            /* '<S71>/Integrator' */
   real_T Integrator_CSTATE_a;          /* '<S73>/Integrator' */
   real_T Integrator_CSTATE_p;          /* '<S75>/Integrator' */
@@ -495,11 +483,14 @@ typedef struct {
   real_T Integrator_CSTATE_mb;         /* '<S81>/Integrator' */
   real_T Integrator_CSTATE_f;          /* '<S83>/Integrator' */
   real_T Integrator_CSTATE_fl;         /* '<S85>/Integrator' */
+  real_T ubvbwb_CSTATE[3];             /* '<S214>/ub,vb,wb' */
   real_T pqr_CSTATE[3];                /* '<S214>/p,q,r ' */
+  real_T q0q1q2q3_CSTATE[4];           /* '<S215>/q0 q1 q2 q3' */
+  real_T xeyeze_CSTATE[3];             /* '<S214>/xe,ye,ze' */
+  real_T Theta_CSTATE;                 /* '<S26>/Theta' */
+  real_T Theta_CSTATE_b;               /* '<S29>/Theta' */
   real_T q_CSTATE;                     /* '<S26>/q' */
   real_T q_CSTATE_e;                   /* '<S29>/q' */
-  real_T IntegratorSecondOrderLimited_CS[6];
-                                 /* '<S312>/Integrator, Second-Order Limited' */
   real_T IntegratorSecondOrderLimited__j[6];
                                  /* '<S368>/Integrator, Second-Order Limited' */
   real_T IntegratorSecondOrderLimited__a[6];
@@ -510,11 +501,8 @@ typedef struct {
 
 /* State disabled  */
 typedef struct {
-  boolean_T xeyeze_CSTATE[3];          /* '<S214>/xe,ye,ze' */
-  boolean_T q0q1q2q3_CSTATE[4];        /* '<S215>/q0 q1 q2 q3' */
-  boolean_T ubvbwb_CSTATE[3];          /* '<S214>/ub,vb,wb' */
-  boolean_T Theta_CSTATE;              /* '<S26>/Theta' */
-  boolean_T Theta_CSTATE_b;            /* '<S29>/Theta' */
+  boolean_T IntegratorSecondOrderLimited_CS[6];
+                                 /* '<S312>/Integrator, Second-Order Limited' */
   boolean_T Integrator_CSTATE;         /* '<S71>/Integrator' */
   boolean_T Integrator_CSTATE_a;       /* '<S73>/Integrator' */
   boolean_T Integrator_CSTATE_p;       /* '<S75>/Integrator' */
@@ -523,11 +511,14 @@ typedef struct {
   boolean_T Integrator_CSTATE_mb;      /* '<S81>/Integrator' */
   boolean_T Integrator_CSTATE_f;       /* '<S83>/Integrator' */
   boolean_T Integrator_CSTATE_fl;      /* '<S85>/Integrator' */
+  boolean_T ubvbwb_CSTATE[3];          /* '<S214>/ub,vb,wb' */
   boolean_T pqr_CSTATE[3];             /* '<S214>/p,q,r ' */
+  boolean_T q0q1q2q3_CSTATE[4];        /* '<S215>/q0 q1 q2 q3' */
+  boolean_T xeyeze_CSTATE[3];          /* '<S214>/xe,ye,ze' */
+  boolean_T Theta_CSTATE;              /* '<S26>/Theta' */
+  boolean_T Theta_CSTATE_b;            /* '<S29>/Theta' */
   boolean_T q_CSTATE;                  /* '<S26>/q' */
   boolean_T q_CSTATE_e;                /* '<S29>/q' */
-  boolean_T IntegratorSecondOrderLimited_CS[6];
-                                 /* '<S312>/Integrator, Second-Order Limited' */
   boolean_T IntegratorSecondOrderLimited__j[6];
                                  /* '<S368>/Integrator, Second-Order Limited' */
   boolean_T IntegratorSecondOrderLimited__a[6];
@@ -630,7 +621,7 @@ typedef struct {
    *   '<S365>/Measurement bias'
    *   '<S365>/g-sensitive bias'
    */
-  real_T pooled25[3];
+  real_T pooled21[3];
 
   /* Computed Parameter: len_Value
    * Referenced by: '<S60>/len'
@@ -653,6 +644,7 @@ typedef struct {
 
 /* External outputs (root outports fed by signals with default storage) */
 typedef struct {
+  MavLinkSensor MavLinkSensorData;     /* '<Root>/MavLinkSensorData' */
   HILGPS HILGPSData;                   /* '<Root>/HILGPSData' */
   uint8_T UnRealData[200];             /* '<Root>/UnRealData' */
   uint8_T ModelStatus[2];              /* '<Root>/ModelStatus' */
