@@ -12,8 +12,8 @@ public:
 	SimModel(std::string name) : Node(name) {
 		RCLCPP_INFO(this->get_logger(), "节点已启动：%s.", name.c_str());
 		sensor_data_publisher = this->create_publisher<adahil_interface::msg::SensorData>("sensor_data",5);
-		// 创建定时器，xxxms为周期。milliseconds表示毫秒  microseconds表示微妙
-		timer_ = this->create_wall_timer(std::chrono::microseconds(1000), std::bind(&SimModel::timer_callback, this));
+		// 创建定时器，xxxms为周期。milliseconds 表示毫秒  microseconds 表示微妙
+		timer_ = this->create_wall_timer(std::chrono::microseconds(500), std::bind(&SimModel::timer_callback, this));
 		libsimodel_initialize();
 	}
 	
@@ -29,25 +29,29 @@ private:
 		//simulation step
 		libsimodel_step();
 		//set output
-		// libsimodel_Y.AccelSensorData
 		//创建消息
 		adahil_interface::msg::SensorData msg;
-		msg.accelx_h = 0x01;
-		msg.accelx_l = 0x02;
-		msg.accely_h = 0x03;
-		msg.accely_l = 0x04;
-		msg.accelz_h = 0x05;
-		msg.accelz_l = 0x06;
-		msg.temp_h = 0x07;
-		msg.temp_l = 0x08;
-		msg.gyrox_h = 0x09;
-		msg.gyrox_l = 0x0A;
-		msg.gyroy_h = 0x0B;
-		msg.gyroy_l = 0x0C;
-		msg.gyroz_h = 0x0D;
-		msg.gyroz_l = 0x0E;
+		msg.header.frame_id = "sim_model";
+		msg.header.stamp = this->get_clock()->now();// builtin_interfaces::msg::Time now = this->get_clock()->now();
+		
+		split16bitTo8bit(libsimodel_Y.GyroSensorData[0], &msg.gyrox_h, &msg.gyrox_l);
+		split16bitTo8bit(libsimodel_Y.GyroSensorData[1], &msg.gyroy_h, &msg.gyroy_l);
+		split16bitTo8bit(libsimodel_Y.GyroSensorData[2], &msg.gyroz_h, &msg.gyroz_l);
+
+		split16bitTo8bit(libsimodel_Y.AccelSensorData[0], &msg.accelx_h, &msg.accelx_l);
+		split16bitTo8bit(libsimodel_Y.AccelSensorData[1], &msg.accely_h, &msg.accely_l);
+		split16bitTo8bit(libsimodel_Y.AccelSensorData[2], &msg.accelz_h, &msg.accelz_l);
+
+		split16bitTo8bit(libsimodel_Y.TempData, &msg.temp_h, &msg.temp_l);
+
 		sensor_data_publisher->publish(msg);
 		// RCLCPP_INFO(this->get_logger(), "Publishing");
+	}
+
+	void split16bitTo8bit(int16_t input, uint8_t *high, uint8_t *low)
+	{
+		*high = (input >> 8) & 0xFF;
+		*low = input & 0xFF;
 	}
 };
 

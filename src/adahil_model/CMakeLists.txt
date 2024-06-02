@@ -15,9 +15,9 @@ set(Green "${Esc}[0;32m")   #Green
 find_library(SIMODEL_LIB simodel_win64 PATHS ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 message("${Green}Found dynamic link library success: ${SIMODEL_LIB}")
 
-include_directories(
-	${CMAKE_CURRENT_SOURCE_DIR}/include/adahil_model/
-)
+# include_directories(
+# 	${CMAKE_CURRENT_SOURCE_DIR}/include/adahil_model/
+# )
 
 add_executable(sim_model src/sim_model.cpp)
 target_include_directories(sim_model PUBLIC
