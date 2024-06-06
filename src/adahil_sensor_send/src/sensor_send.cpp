@@ -1,4 +1,6 @@
 #include <cstdio>
+#include <random>
+#include <ctime>
 #include "spi.h"
 #include "rclcpp/rclcpp.hpp"
 #include "adahil_interface/msg/sensor_data.hpp"
@@ -12,70 +14,71 @@ class SensorSend : public rclcpp::Node, public SPI
 		//构造函数
 		SensorSend(std::string name) : Node(name)
 		{
-			RCLCPP_INFO(this->get_logger(), "node is running: %s.", name.c_str());
+			RCLCPP_INFO(this->get_logger(), "[sensor send] node is running: %s.", name.c_str());
 
-			//初始化spi
-			int ret = SPI::init(spi0_device, SPIDEV_MODE3, 15000000);//SPIDEV_MODE3
+			// 初始化SPI
+			int ret = SPI::init(spi0_device, SPIDEV_MODE3, 16000000);//SPIDEV_MODE3
 			if (ret != 0) {
-				// printf("SPI::init failed (%i)", ret);
+				// printf("SPI::init faile d (%i)", ret);
 				RCLCPP_ERROR(this->get_logger(), "SPI::init failed (%i)", ret);
 			}else{
 				RCLCPP_INFO(this->get_logger(), "SPI::init success.");
 			}
-			BurstBuffer bufferSend_test, bufferSend_compared;
-			bufferSend_compared.Gyro_data[0] = 0x01;
-			bufferSend_compared.Gyro_data[1] = 0x02;
-			bufferSend_compared.Gyro_data[2] = 0x03;
-			bufferSend_compared.Gyro_data[3] = 0x04;
-			bufferSend_compared.Gyro_data[4] = 0x05;
-			bufferSend_compared.Gyro_data[5] = 0x06;
-			bufferSend_compared.Temp_data[0] = 0x07;
-			bufferSend_compared.Temp_data[1] = 0x08;
-			bufferSend_compared.Accel_data[0] = 0x09;
-			bufferSend_compared.Accel_data[1] = 0x0a;
-			bufferSend_compared.Accel_data[2] = 0x0b;
-			bufferSend_compared.Accel_data[3] = 0x0c;
-			bufferSend_compared.Accel_data[4] = 0x0d;
-			bufferSend_compared.Accel_data[5] = 0x0e;
 
-			bufferSend_test.Gyro_data[0] = 0x01;
-			bufferSend_test.Gyro_data[1] = 0x02;
-			bufferSend_test.Gyro_data[2] = 0x03;
-			bufferSend_test.Gyro_data[3] = 0x04;
-			bufferSend_test.Gyro_data[4] = 0x05;
-			bufferSend_test.Gyro_data[5] = 0x06;
-			bufferSend_test.Temp_data[0] = 0x07;
-			bufferSend_test.Temp_data[1] = 0x08;
-			bufferSend_test.Accel_data[0] = 0x09;
-			bufferSend_test.Accel_data[1] = 0x0a;
-			bufferSend_test.Accel_data[2] = 0x0b;
-			bufferSend_test.Accel_data[3] = 0x0c;
-			bufferSend_test.Accel_data[4] = 0x0d;
-			bufferSend_test.Accel_data[5] = 0x0e;
-			SensorDataBurstWrite(&bufferSend_test);
-			usleep(1000*1000);
-			uint16_t success_test_count = 0;
+			//测试SPI到FPGA的读写正确率
 			RCLCPP_INFO(this->get_logger(), "start test.");
+			uint16_t success_test_count = 0;
+			BurstBuffer bufferSend_test, bufferRecv_test;
+			uint8_t test_buffer[14];
 			for (int i = 0; i < 1000; i++){
-				BurstBuffer bufferRecv_test;
+				gentestbuffer(test_buffer, 14);
+				bufferSend_test.Gyro_data[0] = test_buffer[0];
+				bufferSend_test.Gyro_data[1] = test_buffer[1];
+				bufferSend_test.Gyro_data[2] = test_buffer[2];
+				bufferSend_test.Gyro_data[3] = test_buffer[3];
+				bufferSend_test.Gyro_data[4] = test_buffer[4];
+				bufferSend_test.Gyro_data[5] = test_buffer[5];
+				bufferSend_test.Temp_data[0] = test_buffer[6];
+				bufferSend_test.Temp_data[1] = test_buffer[7];
+				bufferSend_test.Accel_data[0] = test_buffer[8];
+				bufferSend_test.Accel_data[1] = test_buffer[9];
+				bufferSend_test.Accel_data[2] = test_buffer[10];
+				bufferSend_test.Accel_data[3] = test_buffer[11];
+				bufferSend_test.Accel_data[4] = test_buffer[12];
+				bufferSend_test.Accel_data[5] = test_buffer[13];			
+				SensorDataBurstWrite(&bufferSend_test);
+				usleep(1000);
 				SensorDataBurstRead(&bufferRecv_test);
-				usleep(1*1000);
-				if (bufferRecv_test.Gyro_data[0] == bufferSend_compared.Gyro_data[0]&&bufferRecv_test.Gyro_data[1] == bufferSend_compared.Gyro_data[1]&&bufferRecv_test.Gyro_data[2] == bufferSend_compared.Gyro_data[2]&&bufferRecv_test.Gyro_data[3] == bufferSend_compared.Gyro_data[3]&&bufferRecv_test.Gyro_data[4] == bufferSend_compared.Gyro_data[4]&&bufferRecv_test.Gyro_data[5] == bufferSend_compared.Gyro_data[5]&&bufferRecv_test.Accel_data[0] == bufferSend_compared.Accel_data[0]&&bufferRecv_test.Accel_data[1] == bufferSend_compared.Accel_data[1]&&bufferRecv_test.Accel_data[2] == bufferSend_compared.Accel_data[2]&&bufferRecv_test.Accel_data[3] == bufferSend_compared.Accel_data[3]&&bufferRecv_test.Accel_data[4] == bufferSend_compared.Accel_data[4]&&bufferRecv_test.Accel_data[5] == bufferSend_compared.Accel_data[5]&&bufferRecv_test.Temp_data[0] == bufferSend_compared.Temp_data[0]&&bufferRecv_test.Temp_data[1] == bufferSend_compared.Temp_data[1]
-				){
+				usleep(1000);
+				if (bufferRecv_test.Gyro_data[0] == test_buffer[0]
+				&&bufferRecv_test.Gyro_data[1] == test_buffer[1]
+				&&bufferRecv_test.Gyro_data[2] == test_buffer[2]
+				&&bufferRecv_test.Gyro_data[3] == test_buffer[3]
+				&&bufferRecv_test.Gyro_data[4] == test_buffer[4]
+				&&bufferRecv_test.Gyro_data[5] == test_buffer[5]
+				&&bufferRecv_test.Temp_data[0] == test_buffer[6]
+				&&bufferRecv_test.Temp_data[1] == test_buffer[7]
+				&&bufferRecv_test.Accel_data[0] == test_buffer[8]
+				&&bufferRecv_test.Accel_data[1] == test_buffer[9]
+				&&bufferRecv_test.Accel_data[2] == test_buffer[10]
+				&&bufferRecv_test.Accel_data[3] == test_buffer[11]
+				&&bufferRecv_test.Accel_data[4] == test_buffer[12]
+				&&bufferRecv_test.Accel_data[5] == test_buffer[13])
+				{
 					success_test_count=success_test_count+1;
 					// RCLCPP_INFO(this->get_logger(), "%d th: success test count: %d", i, success_test_count);
 				}
 				else{
 					RCLCPP_INFO(this->get_logger(), "%d th: fail test count: %d", i, success_test_count);
 					
-					// RCLCPP_INFO(this->get_logger(), "Gyro_data: %x, %x, %x, %x, %x, %x", bufferRecv_test.Gyro_data[0],bufferRecv_test.Gyro_data[1],bufferRecv_test.Gyro_data[2],bufferRecv_test.Gyro_data[3],bufferRecv_test.Gyro_data[4],bufferRecv_test.Gyro_data[5]);
-					// RCLCPP_INFO(this->get_logger(), "Gyro_data: %x, %x, %x, %x, %x, %x", bufferSend_compared.Gyro_data[0],bufferSend_compared.Gyro_data[1],bufferSend_compared.Gyro_data[2],bufferSend_compared.Gyro_data[3],bufferSend_compared.Gyro_data[4],bufferSend_compared.Gyro_data[5]);
+					RCLCPP_INFO(this->get_logger(), "Gyro_data recv: %x, %x, %x, %x, %x, %x", bufferRecv_test.Gyro_data[0],bufferRecv_test.Gyro_data[1],bufferRecv_test.Gyro_data[2],bufferRecv_test.Gyro_data[3],bufferRecv_test.Gyro_data[4],bufferRecv_test.Gyro_data[5]);
+					RCLCPP_INFO(this->get_logger(), "Gyro_data send: %x, %x, %x, %x, %x, %x", test_buffer[0],test_buffer[0],test_buffer[2],test_buffer[3],test_buffer[4],test_buffer[5]);
 
-					// RCLCPP_INFO(this->get_logger(), "Temp_data: %x, %x", bufferRecv_test.Temp_data[0],bufferRecv_test.Temp_data[1]);
-					// RCLCPP_INFO(this->get_logger(), "Temp_data: %x, %x", bufferSend_compared.Temp_data[0],bufferSend_compared.Temp_data[1]);
+					RCLCPP_INFO(this->get_logger(), "Temp_data recv: %x, %x", bufferRecv_test.Temp_data[0],bufferRecv_test.Temp_data[1]);
+					RCLCPP_INFO(this->get_logger(), "Temp_data send: %x, %x", test_buffer[6],test_buffer[7]);
 
-					// RCLCPP_INFO(this->get_logger(), "Accel_data: %x, %x, %x, %x, %x, %x", bufferRecv_test.Accel_data[0],bufferRecv_test.Accel_data[1],bufferRecv_test.Accel_data[2],bufferRecv_test.Accel_data[3],bufferRecv_test.Accel_data[4],bufferRecv_test.Accel_data[5]);
-					// RCLCPP_INFO(this->get_logger(), "Accel_data: %x, %x, %x, %x, %x, %x", bufferSend_compared.Accel_data[0],bufferSend_compared.Accel_data[1],bufferSend_compared.Accel_data[2],bufferSend_compared.Accel_data[3],bufferSend_compared.Accel_data[4],bufferSend_compared.Accel_data[5]);
+					RCLCPP_INFO(this->get_logger(), "Accel_data recv: %x, %x, %x, %x, %x, %x", bufferRecv_test.Accel_data[0],bufferRecv_test.Accel_data[1],bufferRecv_test.Accel_data[2],bufferRecv_test.Accel_data[3],bufferRecv_test.Accel_data[4],bufferRecv_test.Accel_data[5]);
+					RCLCPP_INFO(this->get_logger(), "Accel_data send: %x, %x, %x, %x, %x, %x", test_buffer[8],test_buffer[9],test_buffer[10],test_buffer[11],test_buffer[12],test_buffer[13]);
 					
 				}
 							
@@ -151,6 +154,17 @@ class SensorSend : public rclcpp::Node, public SPI
 			buffer->cmd = 0x80;
 			return transfer((uint8_t *)buffer, (uint8_t *)buffer, sizeof(BurstBuffer));
 		}
+		void gentestbuffer(uint8_t *buffer, uint8_t length)
+		{
+			builtin_interfaces::msg::Time now = this->get_clock()->now();
+			std::default_random_engine generator;
+			generator.seed(now.nanosec);
+			std::uniform_int_distribution<uint8_t> distribution(1, 100);
+			for(uint8_t i = 0; i < length; i++){
+				buffer[i] = distribution(generator);
+			}
+		}
+		
 };
 
 int main(int argc, char **argv)

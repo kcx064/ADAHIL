@@ -13,3 +13,15 @@ uint8 accely_h
 uint8 accely_l
 uint8 accelz_h
 uint8 accelz_l
+uint8 magx_h
+uint8 magx_l
+uint8 magy_h
+uint8 magy_l
+uint8 magz_h
+uint8 magz_l
+uint8 baropressure_h
+uint8 baropressure_m
+uint8 baropressure_l
+uint8 barotemperature_h
+uint8 barotemperature_m
+uint8 barotemperature_l

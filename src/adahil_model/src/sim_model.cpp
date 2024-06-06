@@ -32,7 +32,8 @@ private:
 		//simulation step
 		libsimodel_step();
 		//set output
-		//创建消息
+		
+		//pub sensor_msg
 		adahil_interface::msg::SensorData sensor_msg;
 		sensor_msg.header.frame_id = "sim_model";
 		sensor_msg.header.stamp = this->get_clock()->now();// builtin_interfaces::msg::Time now = this->get_clock()->now();
@@ -47,8 +48,16 @@ private:
 
 		split16bitTo8bit(libsimodel_Y.TempData, &sensor_msg.temp_h, &sensor_msg.temp_l);
 
-		sensor_data_publisher->publish(sensor_msg);
+		split16bitTo8bit(libsimodel_Y.MagSensorData[0], &sensor_msg.magx_h, &sensor_msg.magx_l);
+		split16bitTo8bit(libsimodel_Y.MagSensorData[1], &sensor_msg.magy_h, &sensor_msg.magy_l);
+		split16bitTo8bit(libsimodel_Y.MagSensorData[2], &sensor_msg.magz_h, &sensor_msg.magz_l);
 
+		split32bitTo8bit(libsimodel_Y.PressureTempData[0], &sensor_msg.baropressure_h, &sensor_msg.baropressure_m, &sensor_msg.baropressure_l);
+		split32bitTo8bit(libsimodel_Y.PressureTempData[1], &sensor_msg.barotemperature_h, &sensor_msg.barotemperature_m, &sensor_msg.barotemperature_l);
+
+		sensor_data_publisher->publish(sensor_msg);
+		
+		//pub mavlink_sensor_msg
 		adahil_interface::msg::MavlinkSensorData mavlink_sensor_msg;
 		mavlink_sensor_msg.header.frame_id = "sim_model";
 		mavlink_sensor_msg.header.stamp = this->get_clock()->now();
@@ -64,6 +73,14 @@ private:
 	void split16bitTo8bit(int16_t input, uint8_t *high, uint8_t *low)
 	{
 		*high = (input >> 8) & 0xFF;
+		*low = input & 0xFF;
+	}
+
+	//将32位整数的低24位拆分为高八位 中八位和低八位
+	void split32bitTo8bit(int32_t input, uint8_t *high, uint8_t *mid, uint8_t *low)
+	{
+		*high = (input >> 16) & 0xFF;
+		*mid = (input >> 8) & 0xFF;
 		*low = input & 0xFF;
 	}
 };
