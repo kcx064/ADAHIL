@@ -16,7 +16,7 @@ class SensorSend : public rclcpp::Node, public SPI
 		{
 			RCLCPP_INFO(this->get_logger(), "[sensor send] node is running: %s.", name.c_str());
 
-			// 初始化SPI
+			//初始化SPI
 			int ret = SPI::init(spi0_device, SPIDEV_MODE3, 16000000);//SPIDEV_MODE3
 			if (ret != 0) {
 				// printf("SPI::init faile d (%i)", ret);
@@ -29,6 +29,9 @@ class SensorSend : public rclcpp::Node, public SPI
 			RCLCPP_INFO(this->get_logger(), "start test.");
 			uint16_t success_test_count = 0;
 			BurstBuffer bufferSend_test, bufferRecv_test;
+			//先写入，以清空缓存，否则会在rpi重启后的第一次传输出现错误的数据
+			SensorDataBurstWrite(&bufferSend_test);
+			usleep(1000);
 			uint8_t test_buffer[14];
 			for (int i = 0; i < 1000; i++){
 				gentestbuffer(test_buffer, 14);
@@ -119,6 +122,18 @@ class SensorSend : public rclcpp::Node, public SPI
 			bufferSend.Accel_data[3] = msg->accely_l;
 			bufferSend.Accel_data[4] = msg->accelz_h;
 			bufferSend.Accel_data[5] = msg->accelz_l;
+			bufferSend.Mag_data[0] = msg->magx_l;
+			bufferSend.Mag_data[1] = msg->magx_h;
+			bufferSend.Mag_data[2] = msg->magy_l;
+			bufferSend.Mag_data[3] = msg->magy_h;
+			bufferSend.Mag_data[4] = msg->magz_l;
+			bufferSend.Mag_data[5] = msg->magz_h;
+			bufferSend.Pressure_data[0] = msg->baropressure_h;
+			bufferSend.Pressure_data[1] = msg->baropressure_m;
+			bufferSend.Pressure_data[2] = msg->baropressure_l;
+			bufferSend.Pressure_data[3] = msg->barotemperature_h;
+			bufferSend.Pressure_data[4] = msg->barotemperature_m;
+			bufferSend.Pressure_data[5] = msg->barotemperature_l;
 			SensorDataBurstWrite(&bufferSend);
 		}
 		template <typename T>
