@@ -1,6 +1,7 @@
 // #include <cstdio>
 #include "adahil_interface/msg/sensor_data.hpp"
 #include "adahil_interface/msg/mavlink_sensor_data.hpp"
+#include "adahil_interface/msg/unreal_display_data.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 extern "C"{
@@ -14,15 +15,20 @@ public:
 		RCLCPP_INFO(this->get_logger(), "节点已启动：%s.", name.c_str());
 		sensor_data_publisher = this->create_publisher<adahil_interface::msg::SensorData>("sensor_data",5);
 		mavlink_sensor_data_publisher = this->create_publisher<adahil_interface::msg::MavlinkSensorData>("mavlink_sensor_data",5);
+		unreal_display_data_publisher = this->create_publisher<adahil_interface::msg::UnrealDisplayData>("unreal_display_data",5);
 		// 创建定时器，xxxms为周期。milliseconds 表示毫秒  microseconds 表示微妙
 		timer_ = this->create_wall_timer(std::chrono::microseconds(500), std::bind(&SimModel::timer_callback, this));
+		libsimodel_initialize();
+		timer_unreal_data_pub = this->create_wall_timer(std::chrono::milliseconds(10), std::bind(&SimModel::timer_callback_unreal_data_pub, this));
 		libsimodel_initialize();
 	}
 	
 private:
 	rclcpp::TimerBase::SharedPtr timer_;
+	rclcpp::TimerBase::SharedPtr timer_unreal_data_pub;
 	rclcpp::Publisher<adahil_interface::msg::SensorData>::SharedPtr sensor_data_publisher;
 	rclcpp::Publisher<adahil_interface::msg::MavlinkSensorData>::SharedPtr mavlink_sensor_data_publisher;
+	rclcpp::Publisher<adahil_interface::msg::UnrealDisplayData>::SharedPtr unreal_display_data_publisher;
 	void timer_callback(){
 		//set input
 		libsimodel_U.inPWMs[0] = 0;
@@ -68,6 +74,19 @@ private:
 		mavlink_sensor_msg.set__abs_pressure(libsimodel_Y.MavLinkSensorData.abs_pressure);
 		mavlink_sensor_msg.set__temperature(libsimodel_Y.MavLinkSensorData.temperature);
 		mavlink_sensor_data_publisher->publish(mavlink_sensor_msg);
+	}
+
+	void timer_callback_unreal_data_pub(){
+		//pub unreal_display_msg
+		adahil_interface::msg::UnrealDisplayData unreal_display_msg;
+		
+		unreal_display_msg.header.frame_id = "sim_model";
+		unreal_display_msg.header.stamp = this->get_clock()->now();
+		std::array<uint8_t, 200> unrealDataArray;
+		std::copy_n(reinterpret_cast<uint8_t*>(libsimodel_Y.UnRealData), 200, unrealDataArray.begin());
+		unreal_display_msg.set__unrealdata(unrealDataArray);
+
+		unreal_display_data_publisher->publish(unreal_display_msg);
 	}
 
 	void split16bitTo8bit(int16_t input, uint8_t *high, uint8_t *low)
