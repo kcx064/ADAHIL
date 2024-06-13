@@ -2,6 +2,7 @@
 #include "adahil_interface/msg/sensor_data.hpp"
 #include "adahil_interface/msg/mavlink_sensor_data.hpp"
 #include "adahil_interface/msg/unreal_display_data.hpp"
+#include "adahil_interface/msg/gps_data.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 extern "C"{
@@ -12,24 +13,27 @@ class SimModel : public rclcpp::Node {
 public:
 	// 构造函数,有一个参数为节点名称
 	SimModel(std::string name) : Node(name) {
-		RCLCPP_INFO(this->get_logger(), "节点已启动：%s.", name.c_str());
+		RCLCPP_INFO(this->get_logger(), "Node is running %s.", name.c_str());
 		sensor_data_publisher = this->create_publisher<adahil_interface::msg::SensorData>("sensor_data",5);
 		mavlink_sensor_data_publisher = this->create_publisher<adahil_interface::msg::MavlinkSensorData>("mavlink_sensor_data",5);
 		unreal_display_data_publisher = this->create_publisher<adahil_interface::msg::UnrealDisplayData>("unreal_display_data",5);
+		gps_data_publisher = this->create_publisher<adahil_interface::msg::GPSData>("gps_data",5);
 		// 创建定时器，xxxms为周期。milliseconds 表示毫秒  microseconds 表示微妙
-		timer_ = this->create_wall_timer(std::chrono::microseconds(500), std::bind(&SimModel::timer_callback, this));
-		libsimodel_initialize();
+		timer_main_pub = this->create_wall_timer(std::chrono::microseconds(500), std::bind(&SimModel::timer_callback_main, this));
 		timer_unreal_data_pub = this->create_wall_timer(std::chrono::milliseconds(10), std::bind(&SimModel::timer_callback_unreal_data_pub, this));
+		timer_gps_data_pub = this->create_wall_timer(std::chrono::milliseconds(200), std::bind(&SimModel::timer_callback_gps_data_pub, this));
 		libsimodel_initialize();
 	}
 	
 private:
-	rclcpp::TimerBase::SharedPtr timer_;
+	rclcpp::TimerBase::SharedPtr timer_main_pub;
 	rclcpp::TimerBase::SharedPtr timer_unreal_data_pub;
+	rclcpp::TimerBase::SharedPtr timer_gps_data_pub;
 	rclcpp::Publisher<adahil_interface::msg::SensorData>::SharedPtr sensor_data_publisher;
 	rclcpp::Publisher<adahil_interface::msg::MavlinkSensorData>::SharedPtr mavlink_sensor_data_publisher;
 	rclcpp::Publisher<adahil_interface::msg::UnrealDisplayData>::SharedPtr unreal_display_data_publisher;
-	void timer_callback(){
+	rclcpp::Publisher<adahil_interface::msg::GPSData>::SharedPtr gps_data_publisher;
+	void timer_callback_main(){
 		//set input
 		libsimodel_U.inPWMs[0] = 0;
 		libsimodel_U.inPWMs[1] = 0;
@@ -87,6 +91,34 @@ private:
 		unreal_display_msg.set__unrealdata(unrealDataArray);
 
 		unreal_display_data_publisher->publish(unreal_display_msg);
+	}
+
+	void timer_callback_gps_data_pub(){
+		//pub gps_data
+		adahil_interface::msg::GPSData gps_data;
+		gps_data.header.frame_id = "sim_model";
+		gps_data.header.stamp = this->get_clock()->now();
+
+		gps_data.fix_type = libsimodel_Y.HILGPSData.fix_type;
+		gps_data.satellites_visible = libsimodel_Y.HILGPSData.satellites_visible;
+
+		gps_data.lat = libsimodel_Y.HILGPSData.lat;
+		gps_data.lon = libsimodel_Y.HILGPSData.lon;
+		gps_data.alt = libsimodel_Y.HILGPSData.alt;
+		
+		gps_data.hacc = libsimodel_Y.HILGPSData.hAcc;
+		gps_data.vacc = libsimodel_Y.HILGPSData.vAcc;
+		
+		gps_data.veln = libsimodel_Y.HILGPSData.velN;
+		gps_data.vele = libsimodel_Y.HILGPSData.velE;
+		gps_data.veld = libsimodel_Y.HILGPSData.velD;
+
+		gps_data.gspeed = libsimodel_Y.HILGPSData.gSpeed;
+		gps_data.headmot = libsimodel_Y.HILGPSData.headMot;
+		gps_data.headveh = libsimodel_Y.HILGPSData.headVeh;
+
+		gps_data_publisher->publish(gps_data);
+
 	}
 
 	void split16bitTo8bit(int16_t input, uint8_t *high, uint8_t *low)
