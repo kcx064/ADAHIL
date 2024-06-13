@@ -1,0 +1,14 @@
+std_msgs/Header header
+uint8 fix_type
+uint8 satellites_visible
+float64 lat
+float64 lon
+float64 alt
+float64	hacc
+float64 vacc
+float64 veln
+float64	vele
+float64 veld
+float64 gspeed
+float64 headmot
+float64 headveh

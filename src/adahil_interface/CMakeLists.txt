@@ -14,6 +14,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 	"msg/SensorData.msg"
 	"msg/MavlinkSensorData.msg"
 	"msg/UnrealDisplayData.msg"
+	"msg/GPSData.msg"
 	DEPENDENCIES std_msgs
 )
 
