@@ -15,7 +15,7 @@ class UnrealDataSend : public rclcpp::Node
 public:
 	UnrealDataSend(std::string name) : Node(name)
 	{
-		RCLCPP_INFO(this->get_logger(), "[unreal data send] node is running: %s.", name.c_str());
+		RCLCPP_INFO(this->get_logger(), "Node is running: %s.", name.c_str());
 
 		/* 创建回调组, 类型为MutuallyExclusive（默认），即每次只执行一个回调函数。另有一种Reentrant为多线程调用，组内回调函数可能会同时运行。 */
 		callback_group_sub1_ = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -29,7 +29,7 @@ public:
 		timer_ = this->create_wall_timer(std::chrono::milliseconds(100), std::bind(&UnrealDataSend::timer_callback, this), callback_group_sub1_);
 	}
 private:
-	rclcpp::TimerBase::SharedPtr timer_;
+	rclcpp::TimerBase::SharedPtr timer_; 
 	rclcpp::Subscription<adahil_interface::msg::UnrealDisplayData>::SharedPtr unrealdisplay_data_sub;
 	rclcpp::CallbackGroup::SharedPtr callback_group_sub1_;
 	

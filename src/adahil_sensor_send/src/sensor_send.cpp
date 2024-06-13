@@ -14,7 +14,7 @@ class SensorSend : public rclcpp::Node, public SPI
 		//构造函数
 		SensorSend(std::string name) : Node(name)
 		{
-			RCLCPP_INFO(this->get_logger(), "[sensor send] node is running: %s.", name.c_str());
+			RCLCPP_INFO(this->get_logger(), "Node is running: %s.", name.c_str());
 
 			//初始化SPI
 			int ret = SPI::init(spi0_device, SPIDEV_MODE3, 16000000);//SPIDEV_MODE3

@@ -12,10 +12,14 @@ sleep 5s
 ros2 launch adahil_send_unrealdata run_unrealdata_send.py & PID3=$!
 sleep 5s
 
+ros2 launch adahil_gps_send run_gps_send.py & PID4=$!
+sleep 5s
+
 # ros2 launch example_cpp run_topic_pub.py & PID4=$!
 
 wait
 kill -9 PID1 & 
 kill -9 PID2 & 
 kill -9 PID3 & 
+kill -9 PID4 & 
 exit
