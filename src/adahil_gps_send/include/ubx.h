@@ -72,7 +72,7 @@
 /*** u-blox protocol binary message and payload definitions ***/
 #pragma pack(push, 1)
 /* Rx ACK-ACK */
-union ubx_payload_rx_ack_ack
+typedef union ubx_payload_rx_ack_ack
 {
 	uint16_t msg;
 	struct msg_struct
@@ -80,10 +80,10 @@ union ubx_payload_rx_ack_ack
 		uint8_t clsID;
 		uint8_t msgID;
 	} msg_s;
-}; 
+}ubx_payload_rx_ack_ack_t; 
 
 /* Rx ACK-NAK */
-union ubx_payload_rx_ack_nak
+typedef union ubx_payload_rx_ack_nak
 {
 	uint16_t msg;
 	struct msg_struct
@@ -91,9 +91,9 @@ union ubx_payload_rx_ack_nak
 		uint8_t clsID;
 		uint8_t msgID;
 	} msg_s;
-};
+}ubx_payload_rx_ack_nak_t;
 
-union ubx_tx_ack_nak
+typedef union ubx_tx_ack_nak
 {
 	uint8_t msg_buf[6];
 	struct msg_struct
@@ -103,7 +103,8 @@ union ubx_tx_ack_nak
 		uint16_t length;
 		uint8_t payload[2];
 	} msg_s;
-};
+}ubx_tx_ack_nak_t;
+
 
 #pragma pack(pop)
 /*** END OF u-blox protocol binary message and payload definitions ***/

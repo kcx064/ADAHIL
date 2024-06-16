@@ -115,34 +115,41 @@ class GpsSend : public rclcpp::Node
 				break;
 
 			case UBX_DECODE_CLASS:
-				addByteToChecksum(byte_data);
+				addByteToChecksum_rx(byte_data);
 				_rx_msg = byte_data;
 				_decode_state = UBX_DECODE_ID;
 				RCLCPP_INFO(this->get_logger(), "UBX_CLASS ID is 0x%x", byte_data);
 				break;
 
 			case UBX_DECODE_ID:
-				addByteToChecksum(byte_data);
+				addByteToChecksum_rx(byte_data);
 				_rx_msg |= byte_data << 8;
 				_decode_state = UBX_DECODE_LENGTH1;
 				RCLCPP_INFO(this->get_logger(), "UBX_MSG ID is 0x%x", byte_data);
 				break;
 
 			case UBX_DECODE_LENGTH1:
-				addByteToChecksum(byte_data);
+				addByteToChecksum_rx(byte_data);
 				_rx_payload_length |= byte_data;
 				_decode_state = UBX_DECODE_LENGTH2;	
 				break;
 
 			case UBX_DECODE_LENGTH2:
-				addByteToChecksum(byte_data);
+				addByteToChecksum_rx(byte_data);
 				_rx_payload_length |= (byte_data << 8);
 				RCLCPP_INFO(this->get_logger(), "UBX_MSG LENGTH is %d", _rx_payload_length);
-				_decode_state = UBX_DECODE_PAYLOAD;
+				if(_rx_payload_length>0)
+				{
+					_decode_state = UBX_DECODE_PAYLOAD;
+				}
+				else
+				{
+					_decode_state = UBX_DECODE_CHKSUM1;
+				}
 				break;
 
 			case UBX_DECODE_PAYLOAD:
-				addByteToChecksum(byte_data);
+				addByteToChecksum_rx(byte_data);
 				ret = payloadRxAdd(byte_data);
 
 				if(ret>0){
@@ -156,7 +163,7 @@ class GpsSend : public rclcpp::Node
 			case UBX_DECODE_CHKSUM1:
 				if (_rx_ck_a != byte_data)
 				{
-					RCLCPP_INFO(this->get_logger(), "UBX_DECODE_CHKSUM1 Error, ck_a is %d", _rx_ck_a);
+					RCLCPP_INFO(this->get_logger(), "UBX_DECODE_CHKSUM1 Error, ck_a is %d, byte_data is %d", _rx_ck_a, byte_data);
 					decodeInit();
 				}else{
 					RCLCPP_INFO(this->get_logger(), "UBX_DECODE_CHKSUM1 Success");
@@ -167,7 +174,7 @@ class GpsSend : public rclcpp::Node
 			case UBX_DECODE_CHKSUM2:
 				if (_rx_ck_b != byte_data)
 				{
-					RCLCPP_INFO(this->get_logger(), "UBX_DECODE_CHKSUM2 Error, ck_b is %d", _rx_ck_b);
+					RCLCPP_INFO(this->get_logger(), "UBX_DECODE_CHKSUM2 Error, ck_b is %d, byte_data is %d", _rx_ck_b, byte_data);
 				}else{
 					RCLCPP_INFO(this->get_logger(), "UBX_DECODE_CHKSUM2 Success");
 					decode_payload(_rx_msg, (uint8_t*)&_buf);
@@ -204,12 +211,26 @@ class GpsSend : public rclcpp::Node
 			return ret;
 		}
 
-		void addByteToChecksum(const uint8_t byte_data)
+		/**
+		 * @brief 向接收校验和添加字节
+		 *
+		 * 将给定的字节数据添加到接收校验和中。
+		 *
+		 * @param byte_data 字节数据
+		 */
+		void addByteToChecksum_rx(const uint8_t byte_data)
 		{
 			_rx_ck_a = _rx_ck_a + byte_data;
 			_rx_ck_b = _rx_ck_b + _rx_ck_a;
 		}
 
+		/**
+		 * @brief 将字节数据添加到发送校验和中
+		 *
+		 * 将给定的字节数据添加到发送校验和中，并更新校验和的值。
+		 *
+		 * @param byte_data 字节数据
+		 */
 		void addByteToChecksum_tx(const uint8_t byte_data)
 		{
 			_tx_ck_a = _tx_ck_a + byte_data;
@@ -227,11 +248,34 @@ class GpsSend : public rclcpp::Node
 			switch (_msg)
 			{
 				case UBX_MSG_CFG_VALSET:
+					ubx_tx_ack_nak_t ubx_tx_ack;
+					ubx_tx_ack.msg_s.clsID = UBX_CLASS_ACK;
+					ubx_tx_ack.msg_s.msgID = UBX_ID_ACK_ACK;
+					ubx_tx_ack.msg_s.length = 2;
+					ubx_tx_ack.msg_s.payload[0] = uint8_t(UBX_MSG_CFG_VALSET & 0x0F);
+					ubx_tx_ack.msg_s.payload[1] = uint8_t(UBX_MSG_CFG_VALSET >> 8);
+					for(size_t i=0; i < sizeof(ubx_tx_ack); i++){
+						addByteToChecksum_tx(ubx_tx_ack.msg_buf[i]);
+					}
 
+					{
+						uint8_t sync_buf[] = {UBX_SYNC1, UBX_SYNC2};
+						write(_serial_fd, sync_buf, sizeof(sync_buf));
+					}
+
+					write(_serial_fd, &ubx_tx_ack, sizeof(ubx_tx_ack));
+
+					{
+						uint8_t tx_checksum[] = {_tx_ck_a, _tx_ck_b};
+						write(_serial_fd, tx_checksum, sizeof(tx_checksum));
+					}
+
+					decode_payloadInit();
+					RCLCPP_INFO(this->get_logger(), "UBX_MSG_CFG_VALSET Success");
 				break;
 
 				case UBX_MSG_CFG_PRT:
-					union ubx_tx_ack_nak ubx_tx_nak;
+					ubx_tx_ack_nak_t ubx_tx_nak;
 					ubx_tx_nak.msg_s.clsID = UBX_CLASS_ACK;
 					ubx_tx_nak.msg_s.msgID = UBX_ID_ACK_NAK;
 					ubx_tx_nak.msg_s.length = 2;
@@ -241,15 +285,20 @@ class GpsSend : public rclcpp::Node
 						addByteToChecksum_tx(ubx_tx_nak.msg_buf[i]);
 					}
 
-					uint8_t sync_buf[]={UBX_SYNC1, UBX_SYNC2};
-					write(_serial_fd, sync_buf, sizeof(sync_buf));
+					{
+						uint8_t sync_buf[] = {UBX_SYNC1, UBX_SYNC2};
+						write(_serial_fd, sync_buf, sizeof(sync_buf));
+					}
 
 					write(_serial_fd, &ubx_tx_nak, sizeof(ubx_tx_nak));
 
-					uint8_t tx_checksum[]={_tx_ck_a,_tx_ck_b};
-					write(_serial_fd, tx_checksum, sizeof(tx_checksum));
+					{
+						uint8_t tx_checksum[] = {_tx_ck_a, _tx_ck_b};
+						write(_serial_fd, tx_checksum, sizeof(tx_checksum));
+					}
 
 					decode_payloadInit();
+					RCLCPP_INFO(this->get_logger(), "UBX_MSG_CFG_PRT Success");
 				break;
 			}
 		}
@@ -257,7 +306,8 @@ class GpsSend : public rclcpp::Node
 	private:
 		rclcpp::Subscription<adahil_interface::msg::GPSData>::SharedPtr gps_sub;
 
-		typedef enum {
+		enum ubx_decode_state
+		{
 			UBX_DECODE_SYNC1 = 0,
 			UBX_DECODE_SYNC2,
 			UBX_DECODE_CLASS,
@@ -267,7 +317,8 @@ class GpsSend : public rclcpp::Node
 			UBX_DECODE_PAYLOAD,
 			UBX_DECODE_CHKSUM1,
 			UBX_DECODE_CHKSUM2,
-		} ubx_decode_state_t;
+		}; 
+		typedef enum ubx_decode_state ubx_decode_state_t;
 
 		ubx_decode_state_t _decode_state;
 		uint8_t _rx_ck_a{0};
