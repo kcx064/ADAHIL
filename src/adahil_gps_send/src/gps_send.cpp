@@ -55,7 +55,7 @@ class GpsSend : public rclcpp::Node
 			tcflush(_serial_fd,TCIOFLUSH);
 
 			// 初始化解码状态机
-			decodeInit();
+			parseInit();
 
 			gps_sub = this->create_subscription<adahil_interface::msg::GPSData>("gps_data", 5, std::bind(&GpsSend::gps_callback, this, std::placeholders::_1));
 			
@@ -99,9 +99,15 @@ class GpsSend : public rclcpp::Node
 			switch (_decode_state)
 			{
 			case UBX_DECODE_SYNC1:
+				RCLCPP_INFO(this->get_logger(), " ");
+				RCLCPP_INFO(this->get_logger(), "-------------------------------------------------");
+				RCLCPP_INFO(this->get_logger(), "-------------------------------------------------");
+				RCLCPP_INFO(this->get_logger(), "Begin decode ubx package!");
 				if(byte_data == UBX_SYNC1){
 					_decode_state = UBX_DECODE_SYNC2;
 					RCLCPP_INFO(this->get_logger(), "UBX_DECODE_SYNC1 Success, next state is UBX_DECODE_SYNC2");
+				}else{
+					parseInit();
 				}
 				break;
 
@@ -110,7 +116,7 @@ class GpsSend : public rclcpp::Node
 					_decode_state = UBX_DECODE_CLASS;
 					RCLCPP_INFO(this->get_logger(), "UBX_DECODE_SYNC2 Success, next state is UBX_DECODE_CLASS");
 				}else{
-					decodeInit();
+					parseInit();
 				}
 				break;
 
@@ -137,7 +143,7 @@ class GpsSend : public rclcpp::Node
 			case UBX_DECODE_LENGTH2:
 				addByteToChecksum_rx(byte_data);
 				_rx_payload_length |= (byte_data << 8);
-				RCLCPP_INFO(this->get_logger(), "UBX_MSG LENGTH is %d", _rx_payload_length);
+				RCLCPP_INFO(this->get_logger(), "UBX_MSG PAYLOAD LENGTH is %d", _rx_payload_length);
 				if(_rx_payload_length>0)
 				{
 					_decode_state = UBX_DECODE_PAYLOAD;
@@ -150,6 +156,7 @@ class GpsSend : public rclcpp::Node
 
 			case UBX_DECODE_PAYLOAD:
 				addByteToChecksum_rx(byte_data);
+				//该状态下，每次将解析的字节存入 _payload_buf 中
 				ret = payloadRxAdd(byte_data);
 
 				if(ret>0){
@@ -164,7 +171,7 @@ class GpsSend : public rclcpp::Node
 				if (_rx_ck_a != byte_data)
 				{
 					RCLCPP_INFO(this->get_logger(), "UBX_DECODE_CHKSUM1 Error, ck_a is %d, byte_data is %d", _rx_ck_a, byte_data);
-					decodeInit();
+					parseInit();
 				}else{
 					RCLCPP_INFO(this->get_logger(), "UBX_DECODE_CHKSUM1 Success");
 					_decode_state = UBX_DECODE_CHKSUM2;
@@ -176,10 +183,11 @@ class GpsSend : public rclcpp::Node
 				{
 					RCLCPP_INFO(this->get_logger(), "UBX_DECODE_CHKSUM2 Error, ck_b is %d, byte_data is %d", _rx_ck_b, byte_data);
 				}else{
-					RCLCPP_INFO(this->get_logger(), "UBX_DECODE_CHKSUM2 Success");
-					decode_payload(_rx_msg, (uint8_t*)&_buf);
+					RCLCPP_INFO(this->get_logger(), "UBX_DECODE_CHKSUM2 Success, begin decode payload!");
+					// 进一步地，解析消息内容
+					decode_payload(_rx_msg, (uint8_t*)&_payload_buf, _rx_payload_length);
 				}
-				decodeInit();
+				parseInit();
 				break;
 
 			default:
@@ -187,7 +195,7 @@ class GpsSend : public rclcpp::Node
 			}
 		}
 
-		void decodeInit(){
+		void parseInit(){
 			_decode_state = UBX_DECODE_SYNC1;
 			_rx_ck_a = 0;
 			_rx_ck_b = 0;
@@ -197,7 +205,7 @@ class GpsSend : public rclcpp::Node
 
 		int payloadRxAdd(const uint8_t byte_data){
 			int ret = 0;
-			uint8_t *payload_buf = (uint8_t *)_buf;//临时，后面替换为联合体变量定义，此时需要改为&_buf
+			uint8_t *payload_buf = (uint8_t *)_payload_buf;//临时，后面替换为联合体变量定义，此时需要改为&_payload_buf
 			payload_buf[_rx_payload_index] = byte_data;
 			_rx_payload_index++;
 
@@ -243,11 +251,28 @@ class GpsSend : public rclcpp::Node
 			_tx_ck_b = 0;
 		}
 
-		void decode_payload(uint16_t _msg, uint8_t *payload)
+		/**
+		 * @brief 解码消息内容
+		 *
+		 * 根据传入的消息类型，对消息payload部分进行解码，并发送相应的响应。
+		 * 该函数在 parseChar() 函数运行到UBX_DECODE_CHKSUM2状态后执行一次。该状态意味着检测到了一帧完整的数据包。
+		 * 
+		 * @param _msg 消息类型
+		 * @param payload 消息内容
+		 */
+		void decode_payload(uint16_t _msg, uint8_t *payload, uint16_t payload_length)
 		{
 			switch (_msg)
 			{
 				case UBX_MSG_CFG_VALSET:
+					RCLCPP_INFO(this->get_logger(), "-------------------------------------------------");
+					RCLCPP_INFO(this->get_logger(), "UBX_MSG_CFG_VALSET begin, payload_length is %d", payload_length);
+					//解析UBX_MSG_CFG_VALSET VALSET
+					for(uint16_t i=0; i < payload_length; i++){
+						parse_cfg_valset_payload(payload[i], payload_length-1-i);
+					}
+										
+					//答复ack
 					ubx_tx_ack_nak_t ubx_tx_ack;
 					ubx_tx_ack.msg_s.clsID = UBX_CLASS_ACK;
 					ubx_tx_ack.msg_s.msgID = UBX_ID_ACK_ACK;
@@ -274,6 +299,7 @@ class GpsSend : public rclcpp::Node
 					RCLCPP_INFO(this->get_logger(), "UBX_MSG_CFG_VALSET Success");
 				break;
 
+				//发送无响应消息，这里模拟ublox的新消息接口
 				case UBX_MSG_CFG_PRT:
 					ubx_tx_ack_nak_t ubx_tx_nak;
 					ubx_tx_nak.msg_s.clsID = UBX_CLASS_ACK;
@@ -303,10 +329,196 @@ class GpsSend : public rclcpp::Node
 			}
 		}
 
+		void parse_cfg_valset_payload(uint8_t bytedata, uint16_t bytedata_remain)
+		{
+			uint8_t is_ram{0}, is_bbr{0}, is_flash{0};
+			//临时存储cfg_id中的 cfg_value_size 值
+			uint32_t cfg_value_size{0};
+			switch (decode_cfg_valset_state)
+			{
+				case UBX_DECODE_CFG_VALSET_VERSION:
+					cfg_valset_version = bytedata;
+					if (cfg_valset_version == 0x00){
+						RCLCPP_INFO(this->get_logger(), "UBX-CFG-VALSET Version is 0x00");
+					}
+					else if(cfg_valset_version ==0x01){
+						RCLCPP_INFO(this->get_logger(), "UBX-CFG-VALSET Version is 0x01");
+					}else{
+						RCLCPP_WARN(this->get_logger(), "Unknown UBX-CFG-VALSET Version: 0x%x", cfg_valset_version);
+					}
+					decode_cfg_valset_state = UBX_DECODE_CFG_VALSET_LAYERS;
+					RCLCPP_INFO(this->get_logger(), "next state is UBX_DECODE_CFG_VALSET_LAYERS, bytedata_remain is %d", bytedata_remain);
+				break;
+
+				case UBX_DECODE_CFG_VALSET_LAYERS:
+					// is Update configuration in the RAM layer?
+					is_ram = bytedata & 0x01;
+					// is Update configuration in the BBR layer?
+					is_bbr = bytedata & 0x02;
+					//is Update configuration in the Flash layer
+					is_flash = bytedata & 0x04;
+					RCLCPP_INFO(this->get_logger(), "Update configuration layer is: ram-%d, bbr-%d, flash-%d", is_ram, is_bbr, is_flash);
+
+					decode_cfg_valset_state = UBX_DECODE_CFG_VALSET_RES_TRAN;
+					RCLCPP_INFO(this->get_logger(), "next state is UBX_DECODE_CFG_VALSET_RES_TRAN, bytedata_remain is %d", bytedata_remain);
+				break;
+
+				case UBX_DECODE_CFG_VALSET_RES_TRAN:
+					if (cfg_valset_version==1)
+					{
+						//cfg_valset_version is 1
+					}
+					decode_cfg_valset_state = UBX_DECODE_CFG_VALSET_RES;
+					RCLCPP_INFO(this->get_logger(), "next state is UBX_DECODE_CFG_VALSET_RES, bytedata_remain is %d", bytedata_remain);
+				break;
+
+				case UBX_DECODE_CFG_VALSET_RES:
+					decode_cfg_valset_state = UBX_DECODE_CFG_VALSET_CFG_ID;
+					RCLCPP_INFO(this->get_logger(), "next state is UBX_DECODE_CFG_VALSET_CFG_ID, bytedata_remain is %d", bytedata_remain);
+				break;
+
+				case UBX_DECODE_CFG_VALSET_CFG_ID:
+					cfg_id |= ((uint32_t)bytedata << (8*cfg_id_index));
+					cfg_id_index++;
+					if(cfg_id_index>=4)
+					{
+						//获取完整的cfg_id后，需要获取cfg_value的长度，取决于cfg_id的bit28-bit30位（最低位是bit0）
+						//根据cfg_value_size设置cfg_value_byte_size，即决定该cfg_value的长度。
+						cfg_value_size = (cfg_id & 0x70000000) >> 28;
+						if(cfg_value_size == 1)cfg_value_byte_size=1;
+						else if(cfg_value_size == 2)cfg_value_byte_size=1;
+						else if(cfg_value_size == 3)cfg_value_byte_size=2;
+						else if(cfg_value_size == 4)cfg_value_byte_size=4;
+						else if(cfg_value_size == 5)cfg_value_byte_size=8;
+						else{}
+
+						//进入下一个状态，准备获取cfg_value
+						//cfg_id + cfg_value = cfg_item ，参考ublox的接口文档。
+						decode_cfg_valset_state = UBX_DECODE_CFG_VALSET_CFG_VALUE;
+						RCLCPP_INFO(this->get_logger(), "next state is UBX_DECODE_CFG_VALSET_CFG_VALUE, cfg_id: 0x%08x, cfg_value_byte_size is %d,bytedate_remain is %d", cfg_id, cfg_value_byte_size, bytedata_remain);
+					}else{
+						RCLCPP_INFO(this->get_logger(), "current state is UBX_DECODE_CFG_VALSET_CFG_ID, bytedata_remain is: %d, cfg_id_index is %d", bytedata_remain,cfg_id_index);
+					}
+					
+				break;
+
+				case UBX_DECODE_CFG_VALSET_CFG_VALUE:
+					//依据 cfg_value_index ，填充_cfg_value，填充长度取决于 cfg_value_byte_size
+					_cfg_value.val8byte |= ((uint64_t)bytedata << (8*cfg_value_index));
+					cfg_value_index++;
+
+					//如果接收完毕当前的cfg_value，做出对应的响应后，需要重新回到UBX_DECODE_CFG_VALSET_CFG_ID状态，继续获取下一个获取cfg_item的过程
+					if(cfg_value_index >= cfg_value_byte_size){
+						//code to react to the cfg_item
+						react_to_cfg_item(cfg_id, _cfg_value);
+						
+						//获取cfg_value后拟回到UBX_DECODE_CFG_VALSET_CFG_ID状态继续获取下一组cfg_item
+						decode_cfg_valset_state = UBX_DECODE_CFG_VALSET_CFG_ID;
+						RCLCPP_INFO(this->get_logger(), "UBX_DECODE_CFG_VALSET_CFG_VALUE is success, next state is UBX_DECODE_CFG_VALSET_CFG_ID");
+						//重置状态变量
+						decode_cfg_itemInit();
+					}else{
+						RCLCPP_INFO(this->get_logger(), "current state is UBX_DECODE_CFG_VALSET_CFG_VALUE, bytedata_remain is: %d", bytedata_remain);
+					}
+					//如果没有剩余待处理字节，那么就结束对当前payload的处理
+					if(bytedata_remain==0){
+						parse_cfg_valset_payloadInit();
+						RCLCPP_INFO(this->get_logger(), "Current cfg_valset_payload has been parsed done!");
+					}
+				break;
+
+				default:
+					break;
+			}
+			
+		}
+
+		void parse_cfg_valset_payloadInit(void){
+			decode_cfg_valset_state = UBX_DECODE_CFG_VALSET_VERSION;
+			cfg_valset_version = 0x00;
+		}
+
+		void decode_cfg_itemInit(){
+			cfg_id = 0;
+			cfg_id_index = 0;
+			cfg_value_byte_size = 0;
+			cfg_value_index = 0;
+			_cfg_value.val8byte = 0;
+		}
+
+		void react_to_cfg_item(uint32_t cfg_id, cfg_value_t _cfg_value)
+		{
+			
+			switch (cfg_id)
+			{
+			case UBX_CFG_KEY_CFG_UART1_BAUDRATE:
+				RCLCPP_INFO(this->get_logger(), "Flight Controller want UART-BAUDRATE to be %d", _cfg_value.val4byte);
+				break;
+
+			case UBX_CFG_KEY_CFG_UART1_STOPBITS:
+				/* code */
+				break;
+			
+			case UBX_CFG_KEY_CFG_UART1_DATABITS:
+				/* code */
+				break;
+			
+			case UBX_CFG_KEY_CFG_UART1_PARITY:
+				/* code */
+				break;
+			
+			case UBX_CFG_KEY_CFG_UART1INPROT_UBX:
+				/* code */
+				break;
+
+			case UBX_CFG_KEY_CFG_UART1INPROT_RTCM3X:
+				/* code */
+				break;
+
+			case UBX_CFG_KEY_CFG_UART1INPROT_NMEA:
+				break;
+
+			case UBX_CFG_KEY_CFG_UART1OUTPROT_UBX:
+				break;
+
+			case UBX_CFG_KEY_CFG_UART1OUTPROT_NMEA:
+				break;
+
+			case UBX_CFG_KEY_CFG_USBINPROT_UBX:
+				break;
+
+			case UBX_CFG_KEY_CFG_USBINPROT_RTCM3X:
+				break;
+
+			case UBX_CFG_KEY_CFG_USBINPROT_NMEA:
+				break;
+
+			case UBX_CFG_KEY_CFG_USBOUTPROT_UBX:
+				break;
+
+			case UBX_CFG_KEY_CFG_USBOUTPROT_NMEA:
+				break;
+
+			default:
+				RCLCPP_INFO(this->get_logger(), "obtain complete cfg_item. cfg_id: 0x%08x, cfg_value: %016lx", cfg_id, _cfg_value.val8byte);
+				break;
+			}
+		}
+
 	private:
 		rclcpp::Subscription<adahil_interface::msg::GPSData>::SharedPtr gps_sub;
 
-		enum ubx_decode_state
+		typedef enum ubx_decode_cfg_valset_state
+		{
+			UBX_DECODE_CFG_VALSET_VERSION = 0,
+			UBX_DECODE_CFG_VALSET_LAYERS,
+			UBX_DECODE_CFG_VALSET_RES_TRAN,
+			UBX_DECODE_CFG_VALSET_RES,
+			UBX_DECODE_CFG_VALSET_CFG_ID,
+			UBX_DECODE_CFG_VALSET_CFG_VALUE,
+		} ubx_decode_cfg_valset_state_t;
+
+		typedef enum ubx_decode_state
 		{
 			UBX_DECODE_SYNC1 = 0,
 			UBX_DECODE_SYNC2,
@@ -317,19 +529,32 @@ class GpsSend : public rclcpp::Node
 			UBX_DECODE_PAYLOAD,
 			UBX_DECODE_CHKSUM1,
 			UBX_DECODE_CHKSUM2,
-		}; 
-		typedef enum ubx_decode_state ubx_decode_state_t;
+		} ubx_decode_state_t; 
 
 		ubx_decode_state_t _decode_state;
+
 		uint8_t _rx_ck_a{0};
 		uint8_t _rx_ck_b{0};
 		uint16_t _rx_payload_length{0};
 		uint16_t _rx_payload_index{0};
 		uint16_t _rx_msg{};
-		uint8_t _buf[256];//临时，后面替换为联合体变量定义
+		uint8_t _payload_buf[256];//payload buffer
 
 		uint8_t _tx_ck_a{0};
 		uint8_t _tx_ck_b{0};
+
+		ubx_decode_cfg_valset_state_t decode_cfg_valset_state;
+		uint8_t cfg_valset_version{0};
+		uint8_t cfg_id_index{0};
+		uint32_t cfg_id{0};
+		uint8_t cfg_value_byte_size{0};
+		uint8_t cfg_value_index{0};
+
+		cfg_value_t _cfg_value{0};
+		// uint8_t cfg_value_1byte{0};
+		// uint16_t cfg_value_2byte{0};
+		// uint32_t cfg_value_4byte{0};
+		// uint64_t cfg_value_8byte{0};
 };
 
 int main(int argc, char ** argv)
