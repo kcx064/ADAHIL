@@ -69,6 +69,10 @@
 #define UBX_MSG_CFG_VALSET    ((UBX_CLASS_CFG) | UBX_ID_CFG_VALSET << 8)
 #define UBX_MSG_CFG_PRT       ((UBX_CLASS_CFG) | UBX_ID_CFG_PRT << 8)
 
+#define UBX_MSG_MON_HW        ((UBX_CLASS_MON) | UBX_ID_MON_HW << 8)
+#define UBX_MSG_MON_VER       ((UBX_CLASS_MON) | UBX_ID_MON_VER << 8)
+#define UBX_MSG_MON_RF        ((UBX_CLASS_MON) | UBX_ID_MON_RF << 8)
+
 /* Key ID's for CFG-VAL{GET,SET,DEL} */
 #define UBX_CFG_KEY_CFG_I2C_ENABLED             0x10510003
 #define UBX_CFG_KEY_CFG_I2CINPROT_UBX           0x10710001
