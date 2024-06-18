@@ -350,6 +350,15 @@ class GpsSend : public rclcpp::Node
 						write(_serial_fd, tx_checksum, sizeof(tx_checksum));
 					}
 					decode_payloadInit();
+
+					ubx_payload_mon_ver_t ubx_payload_tx_mon_ver;
+					ubx_payload_tx_mon_ver.clsID = UBX_CLASS_MON;
+					ubx_payload_tx_mon_ver.msgID = UBX_ID_MON_VER;
+					ubx_payload_tx_mon_ver.length = 70;
+					ubx_payload_tx_mon_ver.swVersion;
+					ubx_payload_tx_mon_ver.hwVersion;
+					ubx_payload_tx_mon_ver.extension;
+
 					RCLCPP_INFO(this->get_logger(), "UBX_MSG_MON_VER Success");
 					break;
 			}

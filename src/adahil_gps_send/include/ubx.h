@@ -199,6 +199,18 @@
 
 /*** u-blox protocol binary message and payload definitions ***/
 #pragma pack(push, 1)
+
+/* Rx MON-VER */
+typedef struct ubx_payload_mon_ver
+{
+	uint8_t clsID;
+	uint8_t msgID;
+	uint16_t length;
+	uint8_t swVersion[30];
+	uint8_t hwVersion[10];
+	uint8_t extension[30];
+} ubx_payload_mon_ver_t;
+
 /* Rx ACK-ACK */
 typedef union ubx_payload_rx_ack_ack
 {
