@@ -107,6 +107,7 @@ class GpsSend : public rclcpp::Node
 					_decode_state = UBX_DECODE_SYNC2;
 					RCLCPP_INFO(this->get_logger(), "UBX_DECODE_SYNC1 Success, next state is UBX_DECODE_SYNC2");
 				}else{
+					RCLCPP_INFO(this->get_logger(), "byte_data is %02x", byte_data);
 					parseInit();
 				}
 				break;
@@ -355,9 +356,11 @@ class GpsSend : public rclcpp::Node
 					ubx_payload_tx_mon_ver.clsID = UBX_CLASS_MON;
 					ubx_payload_tx_mon_ver.msgID = UBX_ID_MON_VER;
 					ubx_payload_tx_mon_ver.length = 70;
-					ubx_payload_tx_mon_ver.swVersion;
-					ubx_payload_tx_mon_ver.hwVersion;
-					ubx_payload_tx_mon_ver.extension;
+					// ubx_payload_tx_mon_ver.swVersion;
+					const char* hwV = "00190000";
+					size_t hwVLength = std::strlen(hwV); 
+					std::strncpy(reinterpret_cast<char*>(ubx_payload_tx_mon_ver.hwVersion), hwV, hwVLength);
+					// ubx_payload_tx_mon_ver.extension;
 
 					RCLCPP_INFO(this->get_logger(), "UBX_MSG_MON_VER Success");
 					break;
