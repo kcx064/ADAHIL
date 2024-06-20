@@ -58,7 +58,16 @@ class GpsSend : public rclcpp::Node
 			parseInit();
 
 			gps_sub = this->create_subscription<adahil_interface::msg::GPSData>("gps_data", 5, std::bind(&GpsSend::gps_callback, this, std::placeholders::_1));
-			
+			timer_1hz = this->create_wall_timer(std::chrono::microseconds(1000), std::bind(&GpsSend::timer_callback_1hz, this));
+			// gps_sub->take();
+		}
+
+		void timer_callback_1hz()
+		{
+			ubx_nav_pvt_t ubx_tx_nav_pvt{};
+			ubx_tx_nav_pvt.msg_s.clsID = UBX_CLASS_NAV;
+			ubx_tx_nav_pvt.msg_s.msgID = UBX_ID_NAV_PVT;
+			RCLCPP_INFO(this->get_logger(), "timer_callback_1hz");
 		}
 
 		void gps_callback(const adahil_interface::msg::GPSData::SharedPtr msg)
@@ -537,6 +546,10 @@ class GpsSend : public rclcpp::Node
 			case UBX_CFG_KEY_CFG_USBOUTPROT_NMEA:
 				break;
 
+			case UBX_CFG_KEY_MSGOUT_UBX_NAV_PVT_UART1:
+				RCLCPP_INFO(this->get_logger(), "NAV_PVT is enabled with rate %d.", _cfg_value);
+				break;
+
 			default:
 				RCLCPP_INFO(this->get_logger(), "obtain complete cfg_item. cfg_id: 0x%08x, cfg_value: %016lx", cfg_id, _cfg_value.val8byte);
 				break;
@@ -544,6 +557,7 @@ class GpsSend : public rclcpp::Node
 		}
 
 	private:
+		rclcpp::TimerBase::SharedPtr timer_1hz;
 		rclcpp::Subscription<adahil_interface::msg::GPSData>::SharedPtr gps_sub;
 
 		typedef enum ubx_decode_cfg_valset_state

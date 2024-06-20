@@ -157,6 +157,7 @@
 #define UBX_CFG_KEY_MSGOUT_UBX_NAV_SAT_I2C      0x20910015
 #define UBX_CFG_KEY_MSGOUT_UBX_NAV_DOP_I2C      0x20910038
 #define UBX_CFG_KEY_MSGOUT_UBX_NAV_PVT_I2C      0x20910006
+#define UBX_CFG_KEY_MSGOUT_UBX_NAV_PVT_UART1    0x20910007
 #define UBX_CFG_KEY_MSGOUT_UBX_NAV_RELPOSNED_I2C 0x2091008d
 #define UBX_CFG_KEY_MSGOUT_UBX_RXM_SFRBX_I2C    0x20910231
 #define UBX_CFG_KEY_MSGOUT_UBX_RXM_RAWX_I2C     0x209102a4
@@ -252,6 +253,51 @@ typedef union cfg_value
 	uint16_t val2byte;
 	uint8_t val1byte;
 }cfg_value_t;
+
+/* Rx NAV-PVT (ubx8) */
+typedef union ubx_nav_pvt
+{
+	uint8_t msg_buf[96];
+	struct msg_struct
+	{
+		uint8_t clsID;
+		uint8_t msgID;
+		uint16_t length{92};
+		uint32_t iTOW;          /**< GPS Time of Week [ms] */
+		uint16_t year;          /**< Year (UTC)*/
+		uint8_t  month;         /**< Month, range 1..12 (UTC) */
+		uint8_t  day;           /**< Day of month, range 1..31 (UTC) */
+		uint8_t  hour;          /**< Hour of day, range 0..23 (UTC) */
+		uint8_t  min;           /**< Minute of hour, range 0..59 (UTC) */
+		uint8_t  sec;           /**< Seconds of minute, range 0..60 (UTC) */
+		uint8_t  valid;         /**< Validity flags (see UBX_RX_NAV_PVT_VALID_...) */
+		uint32_t tAcc;          /**< Time accuracy estimate (UTC) [ns] */
+		int32_t  nano;          /**< Fraction of second (UTC) [-1e9...1e9 ns] */
+		uint8_t  fixType;       /**< GNSSfix type: 0 = No fix, 1 = Dead Reckoning only, 2 = 2D fix, 3 = 3d-fix, 4 = GNSS + dead reckoning, 5 = time only fix */
+		uint8_t  flags;         /**< Fix Status Flags (see UBX_RX_NAV_PVT_FLAGS_...) */
+		uint8_t  reserved1;
+		uint8_t  numSV;         /**< Number of SVs used in Nav Solution */
+		int32_t  lon;           /**< Longitude [1e-7 deg] */
+		int32_t  lat;           /**< Latitude [1e-7 deg] */
+		int32_t  height;        /**< Height above ellipsoid [mm] */
+		int32_t  hMSL;          /**< Height above mean sea level [mm] */
+		uint32_t hAcc;          /**< Horizontal accuracy estimate [mm] */
+		uint32_t vAcc;          /**< Vertical accuracy estimate [mm] */
+		int32_t  velN;          /**< NED north velocity [mm/s]*/
+		int32_t  velE;          /**< NED east velocity [mm/s]*/
+		int32_t  velD;          /**< NED down velocity [mm/s]*/
+		int32_t  gSpeed;        /**< Ground Speed (2-D) [mm/s] */
+		int32_t  headMot;       /**< Heading of motion (2-D) [1e-5 deg] */
+		uint32_t sAcc;          /**< Speed accuracy estimate [mm/s] */
+		uint32_t headAcc;       /**< Heading accuracy estimate (motion and vehicle) [1e-5 deg] */
+		uint16_t pDOP;          /**< Position DOP [0.01] */
+		uint16_t reserved2;
+		uint32_t reserved3;
+		int32_t  headVeh;       /**< (ubx8+ only) Heading of vehicle (2-D) [1e-5 deg] */
+		uint32_t reserved4;     /**< (ubx8+ only) */
+	} msg_s;
+}ubx_nav_pvt_t;
+
 
 
 #pragma pack(pop)
