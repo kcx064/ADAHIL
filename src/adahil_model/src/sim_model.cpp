@@ -21,7 +21,7 @@ public:
 		// 创建定时器，xxxms为周期。milliseconds 表示毫秒  microseconds 表示微妙
 		timer_main_pub = this->create_wall_timer(std::chrono::microseconds(500), std::bind(&SimModel::timer_callback_main, this));
 		timer_unreal_data_pub = this->create_wall_timer(std::chrono::milliseconds(10), std::bind(&SimModel::timer_callback_unreal_data_pub, this));
-		timer_gps_data_pub = this->create_wall_timer(std::chrono::milliseconds(200), std::bind(&SimModel::timer_callback_gps_data_pub, this));
+		timer_gps_data_pub = this->create_wall_timer(std::chrono::milliseconds(125), std::bind(&SimModel::timer_callback_gps_data_pub, this));
 		libsimodel_initialize();
 	}
 	
