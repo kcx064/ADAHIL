@@ -5,6 +5,7 @@
 #include <sys/ioctl.h>
 #include <iostream>
 #include <ostream>
+#include <time.h>
 #include "adahil_interface/msg/gps_data.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "ubx.h"
@@ -18,7 +19,8 @@ class GpsSend : public rclcpp::Node
 			RCLCPP_INFO(this->get_logger(), "Node is running: %s.", name.c_str());
 
 			// 打开串口
-			_serial_fd = open("/dev/ttyAMA0", O_RDWR | O_NOCTTY);
+			// _serial_fd = open("/dev/ttyAMA0", O_RDWR | O_NOCTTY);
+			_serial_fd = open("/dev/ttyTHS0", O_RDWR | O_NOCTTY);
 			if (_serial_fd == -1){
 				RCLCPP_ERROR(this->get_logger(), "UART open Error, _serial_fd: %d.", _serial_fd);
 			}else{
@@ -58,12 +60,23 @@ class GpsSend : public rclcpp::Node
 			parseInit();
 
 			gps_sub = this->create_subscription<adahil_interface::msg::GPSData>("gps_data", 5, std::bind(&GpsSend::gps_callback, this, std::placeholders::_1));
-			timer_1hz = this->create_wall_timer(std::chrono::microseconds(1000), std::bind(&GpsSend::timer_callback_1hz, this));
+			timer_1hz = this->create_wall_timer(std::chrono::milliseconds(1000), std::bind(&GpsSend::timer_callback_1hz, this));
 			// gps_sub->take();
 		}
 
 		void timer_callback_1hz()
 		{
+			time_t time_19700101;
+			time(&time_19700101);
+
+			// struct tm* tm_local;
+			// tm_local = localtime(&time_19700101);
+			// RCLCPP_INFO(this->get_logger(), "now datetime: %4d-%02d-%02d %02d:%02d:%02d\n",tm_local->tm_year+1900, tm_local->tm_mon + 1, tm_local->tm_mday, tm_local->tm_hour, tm_local->tm_min, tm_local->tm_sec);
+
+			struct tm* tm_utc;
+			tm_utc = gmtime(&time_19700101);
+			RCLCPP_INFO(this->get_logger(), "utc datetime: %4d-%02d-%02d %02d:%02d:%02d  %d\n",tm_utc->tm_year+1900, tm_utc->tm_mon + 1, tm_utc->tm_mday, tm_utc->tm_hour, tm_utc->tm_min, tm_utc->tm_sec, tm_utc->tm_wday);
+
 			ubx_nav_pvt_t ubx_tx_nav_pvt{};
 			ubx_tx_nav_pvt.msg_s.clsID = UBX_CLASS_NAV;
 			ubx_tx_nav_pvt.msg_s.msgID = UBX_ID_NAV_PVT;
@@ -367,8 +380,8 @@ class GpsSend : public rclcpp::Node
 					ubx_payload_tx_mon_ver.length = 70;
 					// ubx_payload_tx_mon_ver.swVersion;
 					const char* hwV = "00190000";
-					size_t hwVLength = std::strlen(hwV); 
-					std::strncpy(reinterpret_cast<char*>(ubx_payload_tx_mon_ver.hwVersion), hwV, hwVLength);
+					size_t hwVLength = strlen(hwV); 
+					strncpy(reinterpret_cast<char*>(ubx_payload_tx_mon_ver.hwVersion), hwV, hwVLength);
 					// ubx_payload_tx_mon_ver.extension;
 
 					RCLCPP_INFO(this->get_logger(), "UBX_MSG_MON_VER Success");

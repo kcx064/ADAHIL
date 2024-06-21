@@ -1,6 +1,12 @@
 #!/bin/bash
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/pi/ADAHIL/src/adahil_model/lib
+sudo -S chmod 777 ./src/adahil_model/lib/libsimodel_win64.so << EOF
+0 
+EOF
+
+# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/pi/ADAHIL/src/adahil_model/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/nvidia/ADAHIL/src/adahil_model/lib
+
 source ./install/setup.bash 
 # ros2 run adahil_model sim_model
 ros2 launch adahil_model run_sim_model.py & PID1=$!
