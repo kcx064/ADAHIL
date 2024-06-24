@@ -19,8 +19,8 @@ class GpsSend : public rclcpp::Node
 			RCLCPP_INFO(this->get_logger(), "Node is running: %s.", name.c_str());
 
 			// 打开串口
-			// _serial_fd = open("/dev/ttyAMA0", O_RDWR | O_NOCTTY);
-			_serial_fd = open("/dev/ttyTHS0", O_RDWR | O_NOCTTY);
+			_serial_fd = open("/dev/ttyAMA0", O_RDWR | O_NOCTTY);
+			// _serial_fd = open("/dev/ttyTHS0", O_RDWR | O_NOCTTY);
 			if (_serial_fd == -1){
 				RCLCPP_ERROR(this->get_logger(), "UART open Error, _serial_fd: %d.", _serial_fd);
 			}else{
@@ -60,20 +60,56 @@ class GpsSend : public rclcpp::Node
 			parseInit();
 
 			gps_sub = this->create_subscription<adahil_interface::msg::GPSData>("gps_data", 5, std::bind(&GpsSend::gps_callback, this, std::placeholders::_1));
-			timer_1hz = this->create_wall_timer(std::chrono::milliseconds(1000), std::bind(&GpsSend::timer_callback_1hz, this));
+			timer_8hz = this->create_wall_timer(std::chrono::milliseconds(125), std::bind(&GpsSend::timer_callback_8hz, this));
 			// gps_sub->take();
 						
 		}
 
-		void timer_callback_1hz()
+		void timer_callback_8hz()
 		{
-			adahil_interface::msg::GPSData gps_msg;
-			rclcpp::MessageInfo message_info_out;
-			if(gps_sub->take(gps_msg, message_info_out)){
-				RCLCPP_INFO(this->get_logger(), "gps_msg is taken success.");
-			}else{
-				RCLCPP_INFO(this->get_logger(), "gps_msg is taken failed.");
-			};
+			int err = 0, ret = 0;
+			int bytes_available = 0;
+			
+			// 获取串口数据大小
+			err = ioctl(_serial_fd, FIONREAD, (unsigned long)&bytes_available);
+			if (err < 0)
+			{
+				RCLCPP_WARN(this->get_logger(), "FIONREAD error: %d.", err);
+			}
+
+			// 读取串口数据
+			if (bytes_available > 0)
+			{
+				RCLCPP_INFO(this->get_logger(), "Received Raw UART data: %d bytes.", bytes_available);
+				char buffer[256];
+				ret = read(_serial_fd, buffer, bytes_available);
+				if (ret < 0)
+				{
+					std::cerr << "Error " << errno << " from read: " << strerror(errno) << std::endl;
+				}
+				else
+				{
+					for (int i = 0; i < bytes_available; i++)
+					{
+						parseChar(buffer[i]);//逐字节进行处理
+					}
+				}
+			}
+
+		}
+
+		void gps_callback(const adahil_interface::msg::GPSData::SharedPtr msg)
+		{
+			// adahil_interface::msg::GPSData gps_msg;
+			// rclcpp::MessageInfo message_info_out;
+			// if(gps_sub.get()->take(gps_msg, message_info_out)){
+			// 	RCLCPP_INFO(this->get_logger(), "gps_msg is taken success.");
+			// 	// gps_msg.lat;
+			// }else{
+			// 	RCLCPP_INFO(this->get_logger(), "gps_msg is taken failed.");
+			// };
+			msg->lat;
+			msg->lon;
 			
 			time_t time_19700101;
 			time(&time_19700101);
@@ -103,8 +139,8 @@ class GpsSend : public rclcpp::Node
 			ubx_tx_nav_pvt.msg_s.flags = 0x21;//TODO
 			ubx_tx_nav_pvt.msg_s.flags2 = 0x0A;//TODO
 			ubx_tx_nav_pvt.msg_s.numSV = 12;
-			ubx_tx_nav_pvt.msg_s.lon = 0x4558078B;
-			ubx_tx_nav_pvt.msg_s.lat = 0x17D46009;
+			ubx_tx_nav_pvt.msg_s.lon = msg->lon*1e7;
+			ubx_tx_nav_pvt.msg_s.lat = msg->lat*1e7;
 			ubx_tx_nav_pvt.msg_s.height = 0x0000C5D4;
 			ubx_tx_nav_pvt.msg_s.hMSL = 0x0000E7D4;
 			ubx_tx_nav_pvt.msg_s.hAcc = 0x000004FB;
@@ -145,41 +181,6 @@ class GpsSend : public rclcpp::Node
 			// }
 			// tx_checksumInit();
 			send_ubx_msg<ubx_nav_pvt_t>(ubx_tx_nav_pvt);
-
-			RCLCPP_INFO(this->get_logger(), "timer_callback_1hz");
-		}
-
-		void gps_callback(const adahil_interface::msg::GPSData::SharedPtr msg)
-		{
-			// RCLCPP_INFO(this->get_logger(), "GPS Data: %f, %f.", msg->lon, msg->lat);
-			int err = 0, ret = 0;
-			int bytes_available = 0;
-			
-			// 获取串口数据大小
-			err = ioctl(_serial_fd, FIONREAD, (unsigned long)&bytes_available);
-			if (err < 0)
-			{
-				RCLCPP_WARN(this->get_logger(), "FIONREAD error: %d.", err);
-			}
-
-			// 读取串口数据
-			if (bytes_available > 0)
-			{
-				RCLCPP_INFO(this->get_logger(), "Received Raw UART data: %d bytes.", bytes_available);
-				char buffer[256];
-				ret = read(_serial_fd, buffer, bytes_available);
-				if (ret < 0)
-				{
-					std::cerr << "Error " << errno << " from read: " << strerror(errno) << std::endl;
-				}
-				else
-				{
-					for (int i = 0; i < bytes_available; i++)
-					{
-						parseChar(buffer[i]);//逐字节进行处理
-					}
-				}
-			}
 		}
 
 		void parseChar(uint8_t byte_data){
@@ -671,7 +672,7 @@ class GpsSend : public rclcpp::Node
 		}
 
 	private:
-		rclcpp::TimerBase::SharedPtr timer_1hz;
+		rclcpp::TimerBase::SharedPtr timer_8hz;
 		rclcpp::Subscription<adahil_interface::msg::GPSData>::SharedPtr gps_sub;
 
 		typedef enum ubx_decode_cfg_valset_state
