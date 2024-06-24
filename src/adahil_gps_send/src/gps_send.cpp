@@ -69,8 +69,11 @@ class GpsSend : public rclcpp::Node
 		{
 			adahil_interface::msg::GPSData gps_msg;
 			rclcpp::MessageInfo message_info_out;
-			gps_sub->take(gps_msg, message_info_out);
-			
+			if(gps_sub->take(gps_msg, message_info_out)){
+				RCLCPP_INFO(this->get_logger(), "gps_msg is taken success.");
+			}else{
+				RCLCPP_INFO(this->get_logger(), "gps_msg is taken failed.");
+			};
 			
 			time_t time_19700101;
 			time(&time_19700101);
@@ -98,31 +101,50 @@ class GpsSend : public rclcpp::Node
 			ubx_tx_nav_pvt.msg_s.nano = 1e9*(tm_utc->tm_sec - trunc(tm_utc->tm_sec));//秒的小数部分，单位为纳秒ns
 			ubx_tx_nav_pvt.msg_s.fixType = 3;
 			ubx_tx_nav_pvt.msg_s.flags = 0x21;//TODO
-			ubx_tx_nav_pvt.msg_s.reserved1 = 0x0A;//TODO
+			ubx_tx_nav_pvt.msg_s.flags2 = 0x0A;//TODO
 			ubx_tx_nav_pvt.msg_s.numSV = 12;
-			// ubx_tx_nav_pvt.msg_s.lon = ;
-			// ubx_tx_nav_pvt.msg_s.lat = ;
-			// ubx_tx_nav_pvt.msg_s.height = ;
+			ubx_tx_nav_pvt.msg_s.lon = 0x4558078B;
+			ubx_tx_nav_pvt.msg_s.lat = 0x17D46009;
+			ubx_tx_nav_pvt.msg_s.height = 0x0000C5D4;
+			ubx_tx_nav_pvt.msg_s.hMSL = 0x0000E7D4;
+			ubx_tx_nav_pvt.msg_s.hAcc = 0x000004FB;
+			ubx_tx_nav_pvt.msg_s.vAcc = 0x000006F5;
+			ubx_tx_nav_pvt.msg_s.velN = 0x00000011;
+			ubx_tx_nav_pvt.msg_s.velE = 0x00000006;
+			ubx_tx_nav_pvt.msg_s.velD = 0x6C;
+			ubx_tx_nav_pvt.msg_s.gSpeed = 0x12;
+			ubx_tx_nav_pvt.msg_s.headMot = 0x017A6756;
+			
+			ubx_tx_nav_pvt.msg_s.sAcc = 0x0134;
+			ubx_tx_nav_pvt.msg_s.headAcc = 0x000f7279;
+			ubx_tx_nav_pvt.msg_s.pDOP = 0x8B;
+			// ubx_tx_nav_pvt.msg_s.flags3 = 0x00;
+			// ubx_tx_nav_pvt.msg_s.reserved3[0] = 0x017A6756;
+			ubx_tx_nav_pvt.msg_s.headVeh = 0x017A6756;
+			ubx_tx_nav_pvt.msg_s.magDec = 0x02CF;
+			ubx_tx_nav_pvt.msg_s.magAcc = 0x0080;
+
 
 
 			//修改为函数
-			for(size_t i=0; i < sizeof(ubx_tx_nav_pvt); i++)
-			{
-				addByteToChecksum_tx(ubx_tx_nav_pvt.msg_buf[i]);
-			}
+			// for(size_t i=0; i < sizeof(ubx_tx_nav_pvt); i++)
+			// {
+			// 	addByteToChecksum_tx(ubx_tx_nav_pvt.msg_buf[i]);
+			// }
 
-			{
-				uint8_t sync_buf[] = {UBX_SYNC1, UBX_SYNC2};
-				write(_serial_fd, sync_buf, sizeof(sync_buf));
-			}
+			// {
+			// 	uint8_t sync_buf[] = {UBX_SYNC1, UBX_SYNC2};
+			// 	write(_serial_fd, sync_buf, sizeof(sync_buf));
+			// }
 			
-			write(_serial_fd, &ubx_tx_nav_pvt, sizeof(ubx_tx_nav_pvt));
+			// write(_serial_fd, &ubx_tx_nav_pvt, sizeof(ubx_tx_nav_pvt));
 
-			{
-				uint8_t tx_checksum[] = {_tx_ck_a, _tx_ck_b};
-				write(_serial_fd, tx_checksum, sizeof(tx_checksum));
-			}
-			tx_checksumInit();
+			// {
+			// 	uint8_t tx_checksum[] = {_tx_ck_a, _tx_ck_b};
+			// 	write(_serial_fd, tx_checksum, sizeof(tx_checksum));
+			// }
+			// tx_checksumInit();
+			send_ubx_msg<ubx_nav_pvt_t>(ubx_tx_nav_pvt);
 
 			RCLCPP_INFO(this->get_logger(), "timer_callback_1hz");
 		}

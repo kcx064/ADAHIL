@@ -1,8 +1,8 @@
 #!/bin/bash
 
-sudo -S chmod 777 ./src/adahil_model/lib/libsimodel_win64.so << EOF
-0 
-EOF
+sudo -S chmod 777 /dev/ttyTHS0
+
+sudo -S chmod 777 ./src/adahil_model/lib/libsimodel_win64.so
 
 # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/pi/ADAHIL/src/adahil_model/lib
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/nvidia/ADAHIL/src/adahil_model/lib
