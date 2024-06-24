@@ -62,10 +62,16 @@ class GpsSend : public rclcpp::Node
 			gps_sub = this->create_subscription<adahil_interface::msg::GPSData>("gps_data", 5, std::bind(&GpsSend::gps_callback, this, std::placeholders::_1));
 			timer_1hz = this->create_wall_timer(std::chrono::milliseconds(1000), std::bind(&GpsSend::timer_callback_1hz, this));
 			// gps_sub->take();
+						
 		}
 
 		void timer_callback_1hz()
 		{
+			adahil_interface::msg::GPSData gps_msg;
+			rclcpp::MessageInfo message_info_out;
+			gps_sub->take(gps_msg, message_info_out);
+			
+			
 			time_t time_19700101;
 			time(&time_19700101);
 
@@ -87,6 +93,17 @@ class GpsSend : public rclcpp::Node
 			ubx_tx_nav_pvt.msg_s.hour = tm_utc->tm_hour;
 			ubx_tx_nav_pvt.msg_s.min = tm_utc->tm_min;
 			ubx_tx_nav_pvt.msg_s.sec = tm_utc->tm_sec;
+			ubx_tx_nav_pvt.msg_s.valid = 0xF7;
+			ubx_tx_nav_pvt.msg_s.tAcc = 0x03EC;
+			ubx_tx_nav_pvt.msg_s.nano = 1e9*(tm_utc->tm_sec - trunc(tm_utc->tm_sec));//秒的小数部分，单位为纳秒ns
+			ubx_tx_nav_pvt.msg_s.fixType = 3;
+			ubx_tx_nav_pvt.msg_s.flags = 0x21;//TODO
+			ubx_tx_nav_pvt.msg_s.reserved1 = 0x0A;//TODO
+			ubx_tx_nav_pvt.msg_s.numSV = 12;
+			// ubx_tx_nav_pvt.msg_s.lon = ;
+			// ubx_tx_nav_pvt.msg_s.lat = ;
+			// ubx_tx_nav_pvt.msg_s.height = ;
+
 
 			//修改为函数
 			for(size_t i=0; i < sizeof(ubx_tx_nav_pvt); i++)
@@ -126,7 +143,7 @@ class GpsSend : public rclcpp::Node
 			// 读取串口数据
 			if (bytes_available > 0)
 			{
-				RCLCPP_INFO(this->get_logger(), "bytes_available: %d.", bytes_available);
+				RCLCPP_INFO(this->get_logger(), "Received Raw UART data: %d bytes.", bytes_available);
 				char buffer[256];
 				ret = read(_serial_fd, buffer, bytes_available);
 				if (ret < 0)
@@ -148,15 +165,16 @@ class GpsSend : public rclcpp::Node
 			switch (_decode_state)
 			{
 			case UBX_DECODE_SYNC1:
-				RCLCPP_INFO(this->get_logger(), " ");
-				RCLCPP_INFO(this->get_logger(), "-------------------------------------------------");
-				RCLCPP_INFO(this->get_logger(), "-------------------------------------------------");
-				RCLCPP_INFO(this->get_logger(), "Begin decode ubx package!");
+				
 				if(byte_data == UBX_SYNC1){
+					RCLCPP_INFO(this->get_logger(), " ");
+					RCLCPP_INFO(this->get_logger(), "-------------------------------------------------");
+					RCLCPP_INFO(this->get_logger(), "-------------------------------------------------");
+					RCLCPP_INFO(this->get_logger(), "Begin decode ubx package!");
 					_decode_state = UBX_DECODE_SYNC2;
 					RCLCPP_INFO(this->get_logger(), "UBX_DECODE_SYNC1 Success, next state is UBX_DECODE_SYNC2");
 				}else{
-					RCLCPP_INFO(this->get_logger(), "byte_data is %02x", byte_data);
+					RCLCPP_INFO(this->get_logger(), "Undesired ublox byte data: %02x", byte_data);
 					parseInit();
 				}
 				break;
@@ -332,23 +350,26 @@ class GpsSend : public rclcpp::Node
 					ubx_tx_ack.msg_s.payload[1] = uint8_t(UBX_MSG_CFG_VALSET >> 8);
 
 					//修改为函数
-					for(size_t i=0; i < sizeof(ubx_tx_ack); i++){
-						addByteToChecksum_tx(ubx_tx_ack.msg_buf[i]);
-					}
+					// for(size_t i=0; i < sizeof(ubx_tx_ack); i++){
+					// 	addByteToChecksum_tx(ubx_tx_ack.msg_buf[i]);
+					// }
 
-					{
-						uint8_t sync_buf[] = {UBX_SYNC1, UBX_SYNC2};
-						write(_serial_fd, sync_buf, sizeof(sync_buf));
-					}
+					// {
+					// 	uint8_t sync_buf[] = {UBX_SYNC1, UBX_SYNC2};
+					// 	write(_serial_fd, sync_buf, sizeof(sync_buf));
+					// }
 
-					write(_serial_fd, &ubx_tx_ack, sizeof(ubx_tx_ack));
+					// write(_serial_fd, &ubx_tx_ack, sizeof(ubx_tx_ack));
 
-					{
-						uint8_t tx_checksum[] = {_tx_ck_a, _tx_ck_b};
-						write(_serial_fd, tx_checksum, sizeof(tx_checksum));
-					}
+					// {
+					// 	uint8_t tx_checksum[] = {_tx_ck_a, _tx_ck_b};
+					// 	write(_serial_fd, tx_checksum, sizeof(tx_checksum));
+					// }
 
-					tx_checksumInit();
+					// tx_checksumInit();
+					send_ubx_msg<ubx_tx_ack_nak_t>(ubx_tx_ack);
+
+
 					RCLCPP_INFO(this->get_logger(), "UBX_MSG_CFG_VALSET Success");
 				break;
 
@@ -361,23 +382,25 @@ class GpsSend : public rclcpp::Node
 					ubx_tx_nak.msg_s.payload[1] = uint8_t(UBX_MSG_CFG_PRT >> 8);
 
 					//修改为函数
-					for(size_t i=0; i < sizeof(ubx_tx_nak); i++){
-						addByteToChecksum_tx(ubx_tx_nak.msg_buf[i]);
-					}
+					// for(size_t i=0; i < sizeof(ubx_tx_nak); i++){
+					// 	addByteToChecksum_tx(ubx_tx_nak.msg_buf[i]);
+					// }
 
-					{
-						uint8_t sync_buf[] = {UBX_SYNC1, UBX_SYNC2};
-						write(_serial_fd, sync_buf, sizeof(sync_buf));
-					}
+					// {
+					// 	uint8_t sync_buf[] = {UBX_SYNC1, UBX_SYNC2};
+					// 	write(_serial_fd, sync_buf, sizeof(sync_buf));
+					// }
 
-					write(_serial_fd, &ubx_tx_nak, sizeof(ubx_tx_nak));
+					// write(_serial_fd, &ubx_tx_nak, sizeof(ubx_tx_nak));
 
-					{
-						uint8_t tx_checksum[] = {_tx_ck_a, _tx_ck_b};
-						write(_serial_fd, tx_checksum, sizeof(tx_checksum));
-					}
+					// {
+					// 	uint8_t tx_checksum[] = {_tx_ck_a, _tx_ck_b};
+					// 	write(_serial_fd, tx_checksum, sizeof(tx_checksum));
+					// }
+					// tx_checksumInit();
+					
+					send_ubx_msg<ubx_tx_ack_nak_t>(ubx_tx_nak);
 
-					tx_checksumInit();
 					RCLCPP_INFO(this->get_logger(), "UBX_MSG_CFG_PRT Success");
 				break;
 
@@ -390,22 +413,23 @@ class GpsSend : public rclcpp::Node
 					ubx_tx_ack.msg_s.payload[1] = uint8_t(UBX_MSG_MON_VER >> 8);
 
 					//修改为函数
-					for(size_t i=0; i < sizeof(ubx_tx_ack); i++){
-						addByteToChecksum_tx(ubx_tx_ack.msg_buf[i]);
-					}
+					// for(size_t i=0; i < sizeof(ubx_tx_ack); i++){
+					// 	addByteToChecksum_tx(ubx_tx_ack.msg_buf[i]);
+					// }
 
-					{
-						uint8_t sync_buf[] = {UBX_SYNC1, UBX_SYNC2};
-						write(_serial_fd, sync_buf, sizeof(sync_buf));
-					}
+					// {
+					// 	uint8_t sync_buf[] = {UBX_SYNC1, UBX_SYNC2};
+					// 	write(_serial_fd, sync_buf, sizeof(sync_buf));
+					// }
 
-					write(_serial_fd, &ubx_tx_ack, sizeof(ubx_tx_ack));
+					// write(_serial_fd, &ubx_tx_ack, sizeof(ubx_tx_ack));
 
-					{
-						uint8_t tx_checksum[] = {_tx_ck_a, _tx_ck_b};
-						write(_serial_fd, tx_checksum, sizeof(tx_checksum));
-					}
-					tx_checksumInit();
+					// {
+					// 	uint8_t tx_checksum[] = {_tx_ck_a, _tx_ck_b};
+					// 	write(_serial_fd, tx_checksum, sizeof(tx_checksum));
+					// }
+					// tx_checksumInit();
+					send_ubx_msg<ubx_tx_ack_nak_t>(ubx_tx_ack);
 
 					ubx_payload_mon_ver_t ubx_payload_tx_mon_ver;
 					ubx_payload_tx_mon_ver.clsID = UBX_CLASS_MON;
@@ -600,6 +624,28 @@ class GpsSend : public rclcpp::Node
 				RCLCPP_INFO(this->get_logger(), "obtain complete cfg_item. cfg_id: 0x%08x, cfg_value: %016lx", cfg_id, _cfg_value.val8byte);
 				break;
 			}
+		}
+
+		template <typename ubx_msg_union_def>
+		void send_ubx_msg(ubx_msg_union_def ubx_msg){
+			tx_checksumInit();
+			for(size_t i=0; i < sizeof(ubx_msg); i++)
+			{
+				addByteToChecksum_tx(ubx_msg.msg_buf[i]);
+			}
+
+			{
+				uint8_t sync_buf[] = {UBX_SYNC1, UBX_SYNC2};
+				write(_serial_fd, sync_buf, sizeof(sync_buf));
+			}
+			
+			write(_serial_fd, &ubx_msg, sizeof(ubx_msg));
+
+			{
+				uint8_t tx_checksum[] = {_tx_ck_a, _tx_ck_b};
+				write(_serial_fd, tx_checksum, sizeof(tx_checksum));
+			}
+			tx_checksumInit();
 		}
 
 	private:
