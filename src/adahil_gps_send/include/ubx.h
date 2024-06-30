@@ -262,7 +262,7 @@ typedef union ubx_nav_pvt
 	{
 		uint8_t clsID;
 		uint8_t msgID;
-		uint16_t length{92};
+		uint16_t length;
 		uint32_t iTOW;          /**< GPS Time of Week [ms] */
 		uint16_t year;          /**< Year (UTC)*/
 		uint8_t  month;         /**< Month, range 1..12 (UTC) */

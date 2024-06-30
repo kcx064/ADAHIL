@@ -120,7 +120,7 @@ class GpsSend : public rclcpp::Node
 
 			struct tm* tm_utc;
 			tm_utc = gmtime(&time_19700101);
-			RCLCPP_INFO(this->get_logger(), "utc datetime: %4d-%02d-%02d %02d:%02d:%02d  %d\n",tm_utc->tm_year+1900, tm_utc->tm_mon + 1, tm_utc->tm_mday, tm_utc->tm_hour, tm_utc->tm_min, tm_utc->tm_sec, tm_utc->tm_wday);
+			// RCLCPP_INFO(this->get_logger(), "utc datetime: %4d-%02d-%02d %02d:%02d:%02d  %d\n",tm_utc->tm_year+1900, tm_utc->tm_mon + 1, tm_utc->tm_mday, tm_utc->tm_hour, tm_utc->tm_min, tm_utc->tm_sec, tm_utc->tm_wday);
 
 			ubx_nav_pvt_t ubx_tx_nav_pvt{};
 			ubx_tx_nav_pvt.msg_s.clsID = UBX_CLASS_NAV;
