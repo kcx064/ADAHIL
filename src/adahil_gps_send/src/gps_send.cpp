@@ -125,6 +125,7 @@ class GpsSend : public rclcpp::Node
 			ubx_nav_pvt_t ubx_tx_nav_pvt{};
 			ubx_tx_nav_pvt.msg_s.clsID = UBX_CLASS_NAV;
 			ubx_tx_nav_pvt.msg_s.msgID = UBX_ID_NAV_PVT;
+			ubx_tx_nav_pvt.msg_s.length = 92;
 			ubx_tx_nav_pvt.msg_s.iTOW = (tm_utc->tm_wday*24*3600 + tm_utc->tm_hour*3600 + tm_utc->tm_min*60 + tm_utc->tm_sec)*1000;
 			ubx_tx_nav_pvt.msg_s.year = tm_utc->tm_year + 1900;
 			ubx_tx_nav_pvt.msg_s.month = tm_utc->tm_mon + 1;
@@ -154,32 +155,16 @@ class GpsSend : public rclcpp::Node
 			ubx_tx_nav_pvt.msg_s.sAcc = 0x0134;
 			ubx_tx_nav_pvt.msg_s.headAcc = 0x000f7279;
 			ubx_tx_nav_pvt.msg_s.pDOP = 0x8B;
-			// ubx_tx_nav_pvt.msg_s.flags3 = 0x00;
-			// ubx_tx_nav_pvt.msg_s.reserved3[0] = 0x017A6756;
+			ubx_tx_nav_pvt.msg_s.flags3 = 0xE000;
+			ubx_tx_nav_pvt.msg_s.reserved3[0] = 0x86;
+			ubx_tx_nav_pvt.msg_s.reserved3[1] = 0x4c;
+			ubx_tx_nav_pvt.msg_s.reserved3[2] = 0x22;
+			ubx_tx_nav_pvt.msg_s.reserved3[3] = 0x00;
 			ubx_tx_nav_pvt.msg_s.headVeh = 0x017A6756;
 			ubx_tx_nav_pvt.msg_s.magDec = 0x02CF;
 			ubx_tx_nav_pvt.msg_s.magAcc = 0x0080;
 
-
-
-			//修改为函数
-			// for(size_t i=0; i < sizeof(ubx_tx_nav_pvt); i++)
-			// {
-			// 	addByteToChecksum_tx(ubx_tx_nav_pvt.msg_buf[i]);
-			// }
-
-			// {
-			// 	uint8_t sync_buf[] = {UBX_SYNC1, UBX_SYNC2};
-			// 	write(_serial_fd, sync_buf, sizeof(sync_buf));
-			// }
 			
-			// write(_serial_fd, &ubx_tx_nav_pvt, sizeof(ubx_tx_nav_pvt));
-
-			// {
-			// 	uint8_t tx_checksum[] = {_tx_ck_a, _tx_ck_b};
-			// 	write(_serial_fd, tx_checksum, sizeof(tx_checksum));
-			// }
-			// tx_checksumInit();
 			send_ubx_msg<ubx_nav_pvt_t>(ubx_tx_nav_pvt);
 		}
 
@@ -372,26 +357,7 @@ class GpsSend : public rclcpp::Node
 					ubx_tx_ack.msg_s.payload[0] = uint8_t(UBX_MSG_CFG_VALSET & 0x0F);
 					ubx_tx_ack.msg_s.payload[1] = uint8_t(UBX_MSG_CFG_VALSET >> 8);
 
-					//修改为函数
-					// for(size_t i=0; i < sizeof(ubx_tx_ack); i++){
-					// 	addByteToChecksum_tx(ubx_tx_ack.msg_buf[i]);
-					// }
-
-					// {
-					// 	uint8_t sync_buf[] = {UBX_SYNC1, UBX_SYNC2};
-					// 	write(_serial_fd, sync_buf, sizeof(sync_buf));
-					// }
-
-					// write(_serial_fd, &ubx_tx_ack, sizeof(ubx_tx_ack));
-
-					// {
-					// 	uint8_t tx_checksum[] = {_tx_ck_a, _tx_ck_b};
-					// 	write(_serial_fd, tx_checksum, sizeof(tx_checksum));
-					// }
-
-					// tx_checksumInit();
 					send_ubx_msg<ubx_tx_ack_nak_t>(ubx_tx_ack);
-
 
 					RCLCPP_INFO(this->get_logger(), "UBX_MSG_CFG_VALSET Success");
 				break;
@@ -403,24 +369,6 @@ class GpsSend : public rclcpp::Node
 					ubx_tx_nak.msg_s.length = 2;
 					ubx_tx_nak.msg_s.payload[0] = uint8_t(UBX_MSG_CFG_PRT & 0x0F);
 					ubx_tx_nak.msg_s.payload[1] = uint8_t(UBX_MSG_CFG_PRT >> 8);
-
-					//修改为函数
-					// for(size_t i=0; i < sizeof(ubx_tx_nak); i++){
-					// 	addByteToChecksum_tx(ubx_tx_nak.msg_buf[i]);
-					// }
-
-					// {
-					// 	uint8_t sync_buf[] = {UBX_SYNC1, UBX_SYNC2};
-					// 	write(_serial_fd, sync_buf, sizeof(sync_buf));
-					// }
-
-					// write(_serial_fd, &ubx_tx_nak, sizeof(ubx_tx_nak));
-
-					// {
-					// 	uint8_t tx_checksum[] = {_tx_ck_a, _tx_ck_b};
-					// 	write(_serial_fd, tx_checksum, sizeof(tx_checksum));
-					// }
-					// tx_checksumInit();
 					
 					send_ubx_msg<ubx_tx_ack_nak_t>(ubx_tx_nak);
 
@@ -435,23 +383,6 @@ class GpsSend : public rclcpp::Node
 					ubx_tx_ack.msg_s.payload[0] = uint8_t(UBX_MSG_MON_VER & 0x0F);
 					ubx_tx_ack.msg_s.payload[1] = uint8_t(UBX_MSG_MON_VER >> 8);
 
-					//修改为函数
-					// for(size_t i=0; i < sizeof(ubx_tx_ack); i++){
-					// 	addByteToChecksum_tx(ubx_tx_ack.msg_buf[i]);
-					// }
-
-					// {
-					// 	uint8_t sync_buf[] = {UBX_SYNC1, UBX_SYNC2};
-					// 	write(_serial_fd, sync_buf, sizeof(sync_buf));
-					// }
-
-					// write(_serial_fd, &ubx_tx_ack, sizeof(ubx_tx_ack));
-
-					// {
-					// 	uint8_t tx_checksum[] = {_tx_ck_a, _tx_ck_b};
-					// 	write(_serial_fd, tx_checksum, sizeof(tx_checksum));
-					// }
-					// tx_checksumInit();
 					send_ubx_msg<ubx_tx_ack_nak_t>(ubx_tx_ack);
 
 					ubx_payload_mon_ver_t ubx_payload_tx_mon_ver;

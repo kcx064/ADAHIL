@@ -292,12 +292,67 @@ typedef union ubx_nav_pvt
 		uint32_t headAcc;       /**< Heading accuracy estimate (motion and vehicle) [1e-5 deg] */
 		uint16_t pDOP;          /**< Position DOP [0.01] */
 		uint16_t flags3;		/** flags3 */
-		uint8_t reserved3[4];		/** 4 bytes */
+		uint8_t reserved3[4];	/** 4 bytes */
 		int32_t  headVeh;       /**< (ubx8+ only) Heading of vehicle (2-D) [1e-5 deg] */
 		int16_t  magDec;        /**< (ubx8+ only) deg*/
 		uint16_t magAcc;		/** deg */
 	} msg_s;
 }ubx_nav_pvt_t;
+
+
+typedef union ubx_mon_rf
+{
+	uint8_t msg_buf[28];
+	struct msg_struct
+	{
+		uint8_t version;
+		uint8_t nBlocks;         /**< number of RF blocks included */
+		uint8_t reserved1[2];
+
+		struct ubx_payload_rx_mon_rf_block_t {
+			uint8_t  blockId;       /**< RF block id */
+			uint8_t  flags;         /**< jammingState */
+			uint8_t  antStatus;     /**< Status of the antenna superior state machine */
+			uint8_t  antPower;      /**< Current power status of antenna */
+			uint32_t postStatus;    /**< POST status word */
+			uint8_t  reserved2[4];
+			uint16_t noisePerMS;    /**< Noise level as measured by the GPS core */
+			uint16_t agcCnt;        /**< AGC Monitor (counts SIGI xor SIGLO, range 0 to 8191 */
+			uint8_t  jamInd;        /**< CW jamming indicator, scaled (0=no CW jamming, 255=strong CW jamming) */
+			int8_t   ofsI;          /**< Imbalance of I-part of complex signal */
+			uint8_t  magI;          /**< Magnitude of I-part of complex signal (0=no signal, 255=max magnitude) */
+			int8_t   ofsQ;          /**< Imbalance of Q-part of complex signal */
+			uint8_t  magQ;          /**< Magnitude of Q-part of complex signal (0=no signal, 255=max magnitude) */
+			uint8_t  reserved3[3];
+		};
+		ubx_payload_rx_mon_rf_block_t block[1]; ///< only read out the first block
+	};
+} ubx_mon_rf_t;
+
+// typedef struct {
+// 	uint8_t version;
+// 	uint8_t nBlocks;         /**< number of RF blocks included */
+// 	uint8_t reserved1[2];
+
+// 	struct ubx_payload_rx_mon_rf_block_t {
+// 		uint8_t  blockId;       /**< RF block id */
+// 		uint8_t  flags;         /**< jammingState */
+// 		uint8_t  antStatus;     /**< Status of the antenna superior state machine */
+// 		uint8_t  antPower;      /**< Current power status of antenna */
+// 		uint32_t postStatus;    /**< POST status word */
+// 		uint8_t  reserved2[4];
+// 		uint16_t noisePerMS;    /**< Noise level as measured by the GPS core */
+// 		uint16_t agcCnt;        /**< AGC Monitor (counts SIGI xor SIGLO, range 0 to 8191 */
+// 		uint8_t  jamInd;        /**< CW jamming indicator, scaled (0=no CW jamming, 255=strong CW jamming) */
+// 		int8_t   ofsI;          /**< Imbalance of I-part of complex signal */
+// 		uint8_t  magI;          /**< Magnitude of I-part of complex signal (0=no signal, 255=max magnitude) */
+// 		int8_t   ofsQ;          /**< Imbalance of Q-part of complex signal */
+// 		uint8_t  magQ;          /**< Magnitude of Q-part of complex signal (0=no signal, 255=max magnitude) */
+// 		uint8_t  reserved3[3];
+// 	};
+
+// 	ubx_payload_rx_mon_rf_block_t block[1]; ///< only read out the first block
+// } ubx_payload_rx_mon_rf_t;
 
 
 
