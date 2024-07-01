@@ -10,7 +10,10 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(adahil_interface REQUIRED)
 
-add_executable(pwm_read src/pwm_read.cpp)
+add_executable(pwm_read 
+src/pwm_read.cpp
+src/spi.cpp
+)
 target_include_directories(pwm_read PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)

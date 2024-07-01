@@ -19,7 +19,6 @@ class SensorSend : public rclcpp::Node, public SPI
 			//初始化SPI
 			int ret = SPI::init(spi0_device, SPIDEV_MODE3, 16000000);//SPIDEV_MODE3
 			if (ret != 0) {
-				// printf("SPI::init faile d (%i)", ret);
 				RCLCPP_ERROR(this->get_logger(), "SPI::init failed (%i)", ret);
 			}else{
 				RCLCPP_INFO(this->get_logger(), "SPI::init success.");
