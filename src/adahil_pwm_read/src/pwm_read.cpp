@@ -23,18 +23,13 @@ class PWMRead : public rclcpp::Node, public SPI
 			}
 			//测试SPI到FPGA的读写正确率
 			RCLCPP_INFO(this->get_logger(), "start test.");
-			// uint16_t success_test_count = 0;
-			DataBurstRead(&read_buf);
-			RCLCPP_WARN(this->get_logger(), "pwm0 = %u", read_buf.buf_s.pwm[0]);
-			RCLCPP_WARN(this->get_logger(), "pwm1 = %u", read_buf.buf_s.pwm[1]);
-			RCLCPP_WARN(this->get_logger(), "pwm2 = %u", read_buf.buf_s.pwm[2]);
-			for(int i=0;i<33;i++)
-			{
-				RCLCPP_INFO(this->get_logger(), "buf[%d] = %u", i, read_buf.buf[i]);
-			}
+
+			timer_1khz = this->create_wall_timer(std::chrono::milliseconds(500), std::bind(&PWMRead::timer_callback_1khz, this));
+
 		}
 
 	private:
+		rclcpp::TimerBase::SharedPtr timer_1khz;
 
 		#pragma pack(push, 1)
 		typedef union burst_buffer
@@ -56,6 +51,11 @@ class PWMRead : public rclcpp::Node, public SPI
 			//设置为读命令
 			buffer->buf_s.cmd = 0x80;
 			return transfer((uint8_t *)buffer->buf, (uint8_t *)buffer->buf, sizeof(read_buf));
+		}
+
+		void timer_callback_1khz(){
+			DataBurstRead(&read_buf);
+			RCLCPP_WARN(this->get_logger(), "pwm0 = %u, pwm1 = %u,pwm2 = %u, pwm3 = %u", read_buf.buf_s.pwm[0], read_buf.buf_s.pwm[1], read_buf.buf_s.pwm[2], read_buf.buf_s.pwm[3]);
 		}
 
 };
