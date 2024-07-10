@@ -3,6 +3,7 @@
 #include "adahil_interface/msg/mavlink_sensor_data.hpp"
 #include "adahil_interface/msg/unreal_display_data.hpp"
 #include "adahil_interface/msg/gps_data.hpp"
+#include "adahil_interface/msg/pwm_data.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 extern "C"{
@@ -14,13 +15,15 @@ public:
 	// 构造函数,有一个参数为节点名称
 	SimModel(std::string name) : Node(name) {
 		RCLCPP_INFO(this->get_logger(), "Node is running %s.", name.c_str());
+		pwm_data_subscriber = this->create_subscription<adahil_interface::msg::PWMData>("pwm_data", 5, std::bind(&SimModel::pwm_callback, this, std::placeholders::_1));
+
 		sensor_data_publisher = this->create_publisher<adahil_interface::msg::SensorData>("sensor_data",5);
 		mavlink_sensor_data_publisher = this->create_publisher<adahil_interface::msg::MavlinkSensorData>("mavlink_sensor_data",5);
 		unreal_display_data_publisher = this->create_publisher<adahil_interface::msg::UnrealDisplayData>("unreal_display_data",5);
 		gps_data_publisher = this->create_publisher<adahil_interface::msg::GPSData>("gps_data",5);
 		// 创建定时器，xxxms为周期。milliseconds 表示毫秒  microseconds 表示微妙
 		timer_main_pub = this->create_wall_timer(std::chrono::microseconds(500), std::bind(&SimModel::timer_callback_main, this));
-		timer_unreal_data_pub = this->create_wall_timer(std::chrono::milliseconds(10), std::bind(&SimModel::timer_callback_unreal_data_pub, this));
+		timer_unreal_data_pub = this->create_wall_timer(std::chrono::milliseconds(20), std::bind(&SimModel::timer_callback_unreal_data_pub, this));
 		timer_gps_data_pub = this->create_wall_timer(std::chrono::milliseconds(125), std::bind(&SimModel::timer_callback_gps_data_pub, this));
 		libsimodel_initialize();
 	}
@@ -33,12 +36,20 @@ private:
 	rclcpp::Publisher<adahil_interface::msg::MavlinkSensorData>::SharedPtr mavlink_sensor_data_publisher;
 	rclcpp::Publisher<adahil_interface::msg::UnrealDisplayData>::SharedPtr unreal_display_data_publisher;
 	rclcpp::Publisher<adahil_interface::msg::GPSData>::SharedPtr gps_data_publisher;
+	rclcpp::Subscription<adahil_interface::msg::PWMData>::SharedPtr pwm_data_subscriber;
+
+	adahil_interface::msg::PWMData pwm_msg;
+	void pwm_callback(const adahil_interface::msg::PWMData::SharedPtr msg){
+		for (int i =0; i<4 ;i++){
+			libsimodel_U.inPWMs[i] = (double)(msg->pwm[i]-1000)/1000.0;
+			// RCLCPP_INFO(this->get_logger(), "pwm[%d] = %f, %u", i, libsimodel_U.inPWMs[i], msg->pwm[i]);
+		}
+	}
 	void timer_callback_main(){
-		//set input
-		libsimodel_U.inPWMs[0] = 0;
-		libsimodel_U.inPWMs[1] = 0;
-		libsimodel_U.inPWMs[2] = 0;
-		libsimodel_U.inPWMs[3] = 0;
+		/*
+		 * set input is moved in @pwm_callback
+		 */
+
 		//simulation step
 		libsimodel_step();
 		//set output

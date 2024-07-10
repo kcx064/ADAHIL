@@ -23,10 +23,10 @@ public:
 		auto sub1_opt = rclcpp::SubscriptionOptions();
     	sub1_opt.callback_group = callback_group_sub1_;
 		/* 创建订阅者；定义回调函数 */
-		unrealdisplay_data_sub = this->create_subscription<adahil_interface::msg::UnrealDisplayData>("unreal_display_data", 10, std::bind(&UnrealDataSend::sub_unrealdisplay_data_callback, this,std::placeholders::_1), sub1_opt);
+		unrealdisplay_data_sub = this->create_subscription<adahil_interface::msg::UnrealDisplayData>("unreal_display_data", 1, std::bind(&UnrealDataSend::sub_unrealdisplay_data_callback, this,std::placeholders::_1), sub1_opt);
 
 		/* 创建定时器；定义回调函数 */
-		timer_ = this->create_wall_timer(std::chrono::milliseconds(100), std::bind(&UnrealDataSend::timer_callback, this), callback_group_sub1_);
+		timer_ = this->create_wall_timer(std::chrono::milliseconds(20), std::bind(&UnrealDataSend::timer_callback, this), callback_group_sub1_);
 	}
 private:
 	rclcpp::TimerBase::SharedPtr timer_; 

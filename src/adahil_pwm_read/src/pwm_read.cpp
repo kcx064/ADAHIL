@@ -24,12 +24,14 @@ class PWMRead : public rclcpp::Node, public SPI
 			//测试SPI到FPGA的读写正确率
 			RCLCPP_INFO(this->get_logger(), "start test.");
 
-			timer_1khz = this->create_wall_timer(std::chrono::milliseconds(500), std::bind(&PWMRead::timer_callback_1khz, this));
+			timer_1khz = this->create_wall_timer(std::chrono::milliseconds(1), std::bind(&PWMRead::timer_callback_1khz, this));
+			pwm_pub = this->create_publisher<adahil_interface::msg::PWMData>("pwm_data", 10);
 
 		}
 
 	private:
 		rclcpp::TimerBase::SharedPtr timer_1khz;
+		rclcpp::Publisher<adahil_interface::msg::PWMData>::SharedPtr pwm_pub;
 
 		#pragma pack(push, 1)
 		typedef union burst_buffer
@@ -55,7 +57,20 @@ class PWMRead : public rclcpp::Node, public SPI
 
 		void timer_callback_1khz(){
 			DataBurstRead(&read_buf);
-			RCLCPP_WARN(this->get_logger(), "pwm0 = %u, pwm1 = %u,pwm2 = %u, pwm3 = %u", read_buf.buf_s.pwm[0], read_buf.buf_s.pwm[1], read_buf.buf_s.pwm[2], read_buf.buf_s.pwm[3]);
+			// RCLCPP_WARN(this->get_logger(), "pwm0 = %u, pwm1 = %u,pwm2 = %u, pwm3 = %u", read_buf.buf_s.pwm[0], read_buf.buf_s.pwm[1], read_buf.buf_s.pwm[2], read_buf.buf_s.pwm[3]);
+
+			adahil_interface::msg::PWMData pwm_msg;
+			pwm_msg.header.frame_id = "pwm_read";
+			pwm_msg.header.stamp = this->get_clock()->now();
+			pwm_msg.pwm[0] = read_buf.buf_s.pwm[0]/100;
+			pwm_msg.pwm[1] = read_buf.buf_s.pwm[1]/100;
+			pwm_msg.pwm[2] = read_buf.buf_s.pwm[2]/100;
+			pwm_msg.pwm[3] = read_buf.buf_s.pwm[3]/100;
+			pwm_msg.pwm[4] = read_buf.buf_s.pwm[4]/100;
+			pwm_msg.pwm[5] = read_buf.buf_s.pwm[5]/100;
+			pwm_msg.pwm[6] = read_buf.buf_s.pwm[6]/100;
+			pwm_msg.pwm[7] = read_buf.buf_s.pwm[7]/100;
+			pwm_pub->publish(pwm_msg);
 		}
 
 };
