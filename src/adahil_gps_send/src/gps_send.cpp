@@ -61,10 +61,42 @@ class GpsSend : public rclcpp::Node
 
 			gps_sub = this->create_subscription<adahil_interface::msg::GPSData>("gps_data", 5, std::bind(&GpsSend::gps_callback, this, std::placeholders::_1));
 			timer_8hz = this->create_wall_timer(std::chrono::milliseconds(125), std::bind(&GpsSend::timer_callback_8hz, this));
+			timer_1hz = this->create_wall_timer(std::chrono::milliseconds(1000), std::bind(&GpsSend::timer_callback_1hz, this));
 			// gps_sub->take();
 						
 		}
+		void timer_callback_1hz()
+		{
+			time_t time_19700101;
+			time(&time_19700101);
 
+			struct tm* tm_utc;
+			tm_utc = gmtime(&time_19700101);
+
+			ubx_nav_dop_t ubx_tx_nav_dop;
+
+			ubx_tx_nav_dop.msg_s.clsID = UBX_CLASS_NAV;
+			ubx_tx_nav_dop.msg_s.msgID = UBX_ID_NAV_DOP;
+			ubx_tx_nav_dop.msg_s.length = 18;
+			ubx_tx_nav_dop.msg_s.iTOW = (tm_utc->tm_wday*24*3600 + tm_utc->tm_hour*3600 + tm_utc->tm_min*60 + tm_utc->tm_sec)*1000;
+			ubx_tx_nav_dop.msg_s.gDOP = 0x9e;
+			ubx_tx_nav_dop.msg_s.pDOP = 0x8b;
+			ubx_tx_nav_dop.msg_s.tDOP = 0x4b;
+			ubx_tx_nav_dop.msg_s.vDOP = 0x6e;
+			ubx_tx_nav_dop.msg_s.hDOP = 0x56;
+			ubx_tx_nav_dop.msg_s.nDOP = 0x48;
+			ubx_tx_nav_dop.msg_s.eDOP = 0x2f;
+
+			send_ubx_msg<ubx_nav_dop_t>(ubx_tx_nav_dop);
+		}
+
+		/**
+		 * @brief 8Hz 定时器回调函数
+		 *
+		 * 该函数作为 8Hz 定时器的回调函数，用于处理来自飞控串口的gps消息，并做出响应的回应。
+		 *
+		 * @note 该函数假设 `_serial_fd` 已在其他地方正确初始化。
+		 */
 		void timer_callback_8hz()
 		{
 			int err = 0, ret = 0;
@@ -108,8 +140,6 @@ class GpsSend : public rclcpp::Node
 			// }else{
 			// 	RCLCPP_INFO(this->get_logger(), "gps_msg is taken failed.");
 			// };
-			msg->lat;
-			msg->lon;
 			
 			time_t time_19700101;
 			time(&time_19700101);
@@ -526,49 +556,49 @@ class GpsSend : public rclcpp::Node
 				RCLCPP_INFO(this->get_logger(), "Flight Controller want UART-BAUDRATE to be %d", _cfg_value.val4byte);
 				break;
 
-			case UBX_CFG_KEY_CFG_UART1_STOPBITS:
-				/* code */
-				break;
+			// case UBX_CFG_KEY_CFG_UART1_STOPBITS:
+			// 	/* code */
+			// 	break;
 			
-			case UBX_CFG_KEY_CFG_UART1_DATABITS:
-				/* code */
-				break;
+			// case UBX_CFG_KEY_CFG_UART1_DATABITS:
+			// 	/* code */
+			// 	break;
 			
-			case UBX_CFG_KEY_CFG_UART1_PARITY:
-				/* code */
-				break;
+			// case UBX_CFG_KEY_CFG_UART1_PARITY:
+			// 	/* code */
+			// 	break;
 			
-			case UBX_CFG_KEY_CFG_UART1INPROT_UBX:
-				/* code */
-				break;
+			// case UBX_CFG_KEY_CFG_UART1INPROT_UBX:
+			// 	/* code */
+			// 	break;
 
-			case UBX_CFG_KEY_CFG_UART1INPROT_RTCM3X:
-				/* code */
-				break;
+			// case UBX_CFG_KEY_CFG_UART1INPROT_RTCM3X:
+			// 	/* code */
+			// 	break;
 
-			case UBX_CFG_KEY_CFG_UART1INPROT_NMEA:
-				break;
+			// case UBX_CFG_KEY_CFG_UART1INPROT_NMEA:
+			// 	break;
 
-			case UBX_CFG_KEY_CFG_UART1OUTPROT_UBX:
-				break;
+			// case UBX_CFG_KEY_CFG_UART1OUTPROT_UBX:
+			// 	break;
 
-			case UBX_CFG_KEY_CFG_UART1OUTPROT_NMEA:
-				break;
+			// case UBX_CFG_KEY_CFG_UART1OUTPROT_NMEA:
+			// 	break;
 
-			case UBX_CFG_KEY_CFG_USBINPROT_UBX:
-				break;
+			// case UBX_CFG_KEY_CFG_USBINPROT_UBX:
+			// 	break;
 
-			case UBX_CFG_KEY_CFG_USBINPROT_RTCM3X:
-				break;
+			// case UBX_CFG_KEY_CFG_USBINPROT_RTCM3X:
+			// 	break;
 
-			case UBX_CFG_KEY_CFG_USBINPROT_NMEA:
-				break;
+			// case UBX_CFG_KEY_CFG_USBINPROT_NMEA:
+			// 	break;
 
-			case UBX_CFG_KEY_CFG_USBOUTPROT_UBX:
-				break;
+			// case UBX_CFG_KEY_CFG_USBOUTPROT_UBX:
+			// 	break;
 
-			case UBX_CFG_KEY_CFG_USBOUTPROT_NMEA:
-				break;
+			// case UBX_CFG_KEY_CFG_USBOUTPROT_NMEA:
+			// 	break;
 
 			case UBX_CFG_KEY_MSGOUT_UBX_NAV_PVT_UART1:
 				RCLCPP_INFO(this->get_logger(), "NAV_PVT is enabled with rate %d.", _cfg_value.val1byte);
@@ -604,6 +634,7 @@ class GpsSend : public rclcpp::Node
 
 	private:
 		rclcpp::TimerBase::SharedPtr timer_8hz;
+		rclcpp::TimerBase::SharedPtr timer_1hz;
 		rclcpp::Subscription<adahil_interface::msg::GPSData>::SharedPtr gps_sub;
 
 		typedef enum ubx_decode_cfg_valset_state

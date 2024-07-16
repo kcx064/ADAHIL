@@ -299,6 +299,24 @@ typedef union ubx_nav_pvt
 	} msg_s;
 }ubx_nav_pvt_t;
 
+typedef union ubx_nav_dop
+{
+	uint8_t msg_buf[22];
+	struct msg_struct
+	{
+		uint8_t clsID;
+		uint8_t msgID;
+		uint16_t length;
+		uint32_t iTOW;          /**< GPS Time of Week [ms] */
+		uint16_t gDOP;          /**< Geometric DOP [0.01] */
+		uint16_t pDOP;          /**< Position DOP [0.01] */
+		uint16_t tDOP;          /**< Time DOP [0.01] */
+		uint16_t vDOP;          /**< Vertical DOP [0.01] */
+		uint16_t hDOP;          /**< Horizontal DOP [0.01] */
+		uint16_t nDOP;          /**< Northing DOP [0.01] */
+		uint16_t eDOP;          /**< Easting DOP [0.01] */
+	} msg_s;
+} ubx_nav_dop_t;
 
 typedef union ubx_mon_rf
 {
