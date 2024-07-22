@@ -22,6 +22,10 @@ public:
 
 		auto sub1_opt = rclcpp::SubscriptionOptions();
     	sub1_opt.callback_group = callback_group_sub1_;
+
+		/* 定义参数 */
+		this->declare_parameter<std::string>("unreal_data_target_ip", "192.168.0.109");
+
 		/* 创建订阅者；定义回调函数 */
 		unrealdisplay_data_sub = this->create_subscription<adahil_interface::msg::UnrealDisplayData>("unreal_display_data", 1, std::bind(&UnrealDataSend::sub_unrealdisplay_data_callback, this,std::placeholders::_1), sub1_opt);
 
@@ -40,8 +44,9 @@ private:
 	{
 		// RCLCPP_INFO(this->get_logger(), "[unreal data send] timer is running.");
 		/* 创建udp发送unrealudp_data到目标ip */
-		const char *target_ip = "192.168.0.105"; // 替换为你的目标IP
-    	const int target_port = 20010; // 替换为你的目标端口
+		std::string target_ip; //替换为你的目标IP
+		this->get_parameter<std::string>("unreal_data_target_ip", target_ip);
+    	const int target_port = 20010;           //替换为你的目标port
 
 		int sockfd;
     	struct sockaddr_in serv_addr;
@@ -55,7 +60,7 @@ private:
 
 		memset((char *) &serv_addr, 0, sizeof(serv_addr));
 		serv_addr.sin_family = AF_INET;
-		serv_addr.sin_addr.s_addr = inet_addr(target_ip);
+		serv_addr.sin_addr.s_addr = inet_addr(target_ip.c_str());
 		serv_addr.sin_port = htons(target_port);
 		// 发送数据
 		if (sendto(sockfd, reinterpret_cast<const void*>(unrealudp_data.data()), 200, 0, (const struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
