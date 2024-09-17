@@ -1,3 +1,40 @@
+  ## 环境要求
+  linux ubuntu ROS2
+
+  支持多种运行模式：Raspi（基本完成，未仿真测试）、ARM PC（开发中）、Jetson NX（开发中）
+
+  ## 依赖仓库
+
+  git clone https://github.com/PX4/px4_msgs.git
+
+
+  git clone https://github.com/eProsima/Micro-XRCE-DDS-Agent.git
+  ```shell
+  git clone https://github.com/eProsima/Micro-XRCE-DDS-Agent.git
+  cd Micro-XRCE-DDS-Agent
+  mkdir build
+  cd build
+  cmake ..
+  make
+  sudo make install
+  sudo ldconfig /usr/local/lib/
+  ```
+
+  MicroXRCEAgent udp4 -p 8888
+  sudo MicroXRCEAgent serial --dev /dev/ttyS6 -b 921600
+
+  ## 安装MavROS
+  humble/foxy
+  sudo apt-get install ros-humble-mavros 
+  sudo apt-get install ros-humble-mavros-extras
+
+  参考：[ROS2安装MavROS](https://blog.csdn.net/sinat_16643223/article/details/136144717)
+
+  运行：
+  ```sh
+  ros2 run mavros mavros_node --ros-args --params-file ./mavros/mavros_param_1.yaml
+  ```
+
   ## 启用树莓派串口设备
   参考连接：
   https://www.raspberrypi.com/documentation/computers/configuration.html#configure-uarts
