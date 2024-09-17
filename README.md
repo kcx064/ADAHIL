@@ -3,12 +3,10 @@
 
   支持多种运行模式：Raspi（基本完成，未仿真测试）、ARM PC（开发中）、Jetson NX（开发中）
 
-  ## 依赖仓库
+  ## 安装Micro-XRCE-DDS
 
-  git clone https://github.com/PX4/px4_msgs.git
+  Micro-XRCE-DDS适用于ROS2环境的可用于与PX4 1.14以上版本进行分布式通信的方式，也是MavROS的替代
 
-
-  git clone https://github.com/eProsima/Micro-XRCE-DDS-Agent.git
   ```shell
   git clone https://github.com/eProsima/Micro-XRCE-DDS-Agent.git
   cd Micro-XRCE-DDS-Agent
@@ -19,14 +17,92 @@
   sudo make install
   sudo ldconfig /usr/local/lib/
   ```
+  ## 测试Micro-XRCE-DDS
 
-  MicroXRCEAgent udp4 -p 8888
-  sudo MicroXRCEAgent serial --dev /dev/ttyS6 -b 921600
+  `MicroXRCEAgent udp4 -p 8888`
+
+  wsl1中运行
+  `sudo MicroXRCEAgent serial --dev /dev/ttyS6 -b 921600`
+  Raspi中使用GPIO UART运行
+  `sudo MicroXRCEAgent serial --dev /dev/ttyAMA0 -b 921600`
+  Raspi中使用USB UART运行
+  `sudo MicroXRCEAgent serial --dev /dev/ttyACM0 -b 921600`
+
+  ## 使用Micro-XRCE-DDS
+
+  安装PX4消息定义，在src目录下
+  
+  `git clone https://github.com/PX4/px4_msgs.git`
+
+  `colcon build`编译即可
+  
+  安装测试例子，在src目录下
+
+  ```sh
+  git clone https://github.com/PX4/px4_ros_com.git
+  ```
+  
+  clone后需要修改文件src/px4_ros_com/launch/sensor_combined_listener.launch.py的对应部分为
+  
+  ```python
+  def generate_launch_description():
+
+    micro_ros_agent = ExecuteProcess(
+        cmd=[[
+            'MicroXRCEAgent serial --dev /dev/ttyAMA0 -b 921600'
+        ]],
+        shell=True
+    )
+
+    sensor_combined_listener_node = Node(
+        package='px4_ros_com',
+        executable='sensor_combined_listener',
+        output='screen',
+        shell=True,
+    )
+
+    return LaunchDescription([
+        micro_ros_agent,
+        sensor_combined_listener_node
+    ])
+  ```
+
+  再次执行编译
+  `colcon build --packages-select px4_ros_com`
+
+  运行
+
+  ```sh
+  source install/local_setup.bash
+  ros2 launch px4_ros_com sensor_combined_listener.launch.py
+  ```
 
   ## 安装MavROS
-  humble/foxy
+
+  安装ROS2 foxy对应的MavROS(ubuntu 22.04)
+  ```sh
+  sudo apt-get install ros-foxy-mavros 
+  sudo apt-get install ros-foxy-mavros-extras
+  ```
+
+  安装ROS2 humble对应的MavROS(ubuntu 22.04)
+  ```sh
   sudo apt-get install ros-humble-mavros 
   sudo apt-get install ros-humble-mavros-extras
+  ```
+
+  安装ROS2 jazzy对应的MavROS(ubuntu 24.04)
+  ```sh
+  sudo apt-get install ros-jazzy-mavros 
+  sudo apt-get install ros-jazzy-mavros-extras
+  ```
+  
+  安装依赖
+  ```sh
+  git clone -b ros2 https://github.com/mavlink/mavros.git
+  cd mavros/mavros/scripts
+  sudo ./install_geographiclib_datasets.sh
+  ```
 
   参考：[ROS2安装MavROS](https://blog.csdn.net/sinat_16643223/article/details/136144717)
 
