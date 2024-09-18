@@ -27,12 +27,17 @@
   `sudo MicroXRCEAgent serial --dev /dev/ttyAMA0 -b 921600`
   Raspi中使用USB UART运行
   `sudo MicroXRCEAgent serial --dev /dev/ttyACM0 -b 921600`
+  Xavier-NX中使用GPIO UART运行
+  `sudo MicroXRCEAgent serial --dev /dev/ttyTHS0 -b 921600`
 
   ## 使用Micro-XRCE-DDS
 
   安装PX4消息定义，在src目录下
   
   `git clone https://github.com/PX4/px4_msgs.git`
+
+  
+  > 也可以设置为submodule，git submodule add https://github.com/PX4/px4_msgs.git src/px4_msgs
 
   `colcon build`编译即可
   
