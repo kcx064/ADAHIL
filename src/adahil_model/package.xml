@@ -11,6 +11,8 @@
 
   <depend>rclcpp</depend>
   <depend>adahil_interface</depend>
+  <depend>px4_msgs</depend>
+  <depend>mavros_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

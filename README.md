@@ -23,10 +23,13 @@
 
   wsl1中运行
   `sudo MicroXRCEAgent serial --dev /dev/ttyS6 -b 921600`
+  
   Raspi中使用GPIO UART运行
   `sudo MicroXRCEAgent serial --dev /dev/ttyAMA0 -b 921600`
+  
   Raspi中使用USB UART运行
   `sudo MicroXRCEAgent serial --dev /dev/ttyACM0 -b 921600`
+  
   Xavier-NX中使用GPIO UART运行
   `sudo MicroXRCEAgent serial --dev /dev/ttyTHS0 -b 921600`
 

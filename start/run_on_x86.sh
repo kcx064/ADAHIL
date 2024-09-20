@@ -8,7 +8,7 @@ echo "当前路径是: $RUN_PATH"
 
 sudo -S chmod 777 ./src/adahil_model/lib/libsimodel_win64.so
 
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RUN_PATH/src/adahil_model/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/src/adahil_model/lib
 
 source ./install/setup.bash 
 

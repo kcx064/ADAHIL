@@ -9,6 +9,8 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(adahil_interface REQUIRED)
+find_package(px4_msgs)
+find_package(mavros_msgs)
 
 string(ASCII 27 Esc) # Esc \033 八进制的27即Esc
 set(Green "${Esc}[0;32m")   #Green
@@ -28,6 +30,8 @@ ament_target_dependencies(
   sim_model
   "rclcpp"
   "adahil_interface"
+  "px4_msgs"
+  "mavros_msgs"
 )
 target_link_libraries(sim_model ${SIMODEL_LIB})
 
