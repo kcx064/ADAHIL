@@ -5,9 +5,9 @@
 #include "adahil_interface/msg/gps_data.hpp"
 #include "adahil_interface/msg/pwm_data.hpp"
 
-#include "px4_msgs/msg/sensor_gyro.hpp"
-#include "px4_msgs/msg/sensor_accel.hpp"
-#include "px4_msgs/msg/sensor_mag.hpp"
+// #include "px4_msgs/msg/sensor_gyro.hpp"
+// #include "px4_msgs/msg/sensor_accel.hpp"
+// #include "px4_msgs/msg/sensor_mag.hpp"
 
 #include "mavros_msgs/msg/hil_sensor.hpp"
 
@@ -31,12 +31,14 @@ public:
 		gps_data_publisher = this->create_publisher<adahil_interface::msg::GPSData>("gps_data",5);
 
 		/* used for Micro-DDS(PX4) HIL */
-		sensor_gyro_pub = this->create_publisher<px4_msgs::msg::SensorGyro>("/fmu/in/sensor_gyro", 5);
-		sensor_accel_pub = this->create_publisher<px4_msgs::msg::SensorAccel>("/fmu/in/sensor_accel",5);
-		sensor_mag_pub = this->create_publisher<px4_msgs::msg::SensorMag>("/fmu/in/sensor_mag",5);
+		// sensor_gyro_pub = this->create_publisher<px4_msgs::msg::SensorGyro>("/fmu/in/sensor_gyro", 5);
+		// sensor_accel_pub = this->create_publisher<px4_msgs::msg::SensorAccel>("/fmu/in/sensor_accel",5);
+		// sensor_mag_pub = this->create_publisher<px4_msgs::msg::SensorMag>("/fmu/in/sensor_mag",5);
+
+		hil_sensor_pub = this->create_publisher<mavros_msgs::msg::HilSensor>("/mavros/hil/imu_ned",5);
 
 		// 创建定时器，xxxms为周期。milliseconds 表示毫秒  microseconds 表示微妙
-		timer_main_pub = this->create_wall_timer(std::chrono::milliseconds(10), std::bind(&SimModel::timer_callback_main, this));
+		timer_main_pub = this->create_wall_timer(std::chrono::milliseconds(5), std::bind(&SimModel::timer_callback_main, this));
 		timer_unreal_data_pub = this->create_wall_timer(std::chrono::milliseconds(20), std::bind(&SimModel::timer_callback_unreal_data_pub, this));
 		timer_gps_data_pub = this->create_wall_timer(std::chrono::milliseconds(125), std::bind(&SimModel::timer_callback_gps_data_pub, this));
 		libsimodel_initialize();
@@ -53,12 +55,15 @@ private:
 	rclcpp::Publisher<adahil_interface::msg::UnrealDisplayData>::SharedPtr unreal_display_data_publisher;
 	rclcpp::Publisher<adahil_interface::msg::GPSData>::SharedPtr gps_data_publisher;
 
-	/* used for Micro-DDS(PX4) HIL */
-	rclcpp::Publisher<px4_msgs::msg::SensorGyro>::SharedPtr sensor_gyro_pub;
-	rclcpp::Publisher<px4_msgs::msg::SensorAccel>::SharedPtr sensor_accel_pub;
-	rclcpp::Publisher<px4_msgs::msg::SensorMag>::SharedPtr sensor_mag_pub;
-
 	rclcpp::Subscription<adahil_interface::msg::PWMData>::SharedPtr pwm_data_subscriber;
+
+	/* used for Micro-DDS(PX4) HIL */
+	// rclcpp::Publisher<px4_msgs::msg::SensorGyro>::SharedPtr sensor_gyro_pub;
+	// rclcpp::Publisher<px4_msgs::msg::SensorAccel>::SharedPtr sensor_accel_pub;
+	// rclcpp::Publisher<px4_msgs::msg::SensorMag>::SharedPtr sensor_mag_pub;
+
+	/* used for Mavros(PX4) HIL*/
+	rclcpp::Publisher<mavros_msgs::msg::HilSensor>::SharedPtr hil_sensor_pub;
 
 	adahil_interface::msg::PWMData pwm_msg;
 	void pwm_callback(const adahil_interface::msg::PWMData::SharedPtr msg){
@@ -113,32 +118,58 @@ private:
 		mavlink_sensor_data_publisher->publish(mavlink_sensor_msg);
 
 		//pub sensor_xxx for PX4 HIL
-		auto sensor_gyro = px4_msgs::msg::SensorGyro();
-		sensor_gyro.timestamp = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::steady_clock::now()).time_since_epoch().count();
-		sensor_gyro.device_id = 1310988;//id means simulated gyro
-		sensor_gyro.x = libsimodel_Y.MavLinkSensorData.xgyro;
-		sensor_gyro.y = libsimodel_Y.MavLinkSensorData.ygyro;
-		sensor_gyro.z = libsimodel_Y.MavLinkSensorData.zgyro;
-		sensor_gyro.temperature = 30;
-		this->sensor_gyro_pub->publish(sensor_gyro);
+		// auto sensor_gyro = px4_msgs::msg::SensorGyro();
+		// sensor_gyro.timestamp = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::steady_clock::now()).time_since_epoch().count();
+		// sensor_gyro.device_id = 1310988;//id means simulated gyro
+		// sensor_gyro.x = libsimodel_Y.MavLinkSensorData.xgyro;
+		// sensor_gyro.y = libsimodel_Y.MavLinkSensorData.ygyro;
+		// sensor_gyro.z = libsimodel_Y.MavLinkSensorData.zgyro;
+		// sensor_gyro.temperature = 30;
+		// this->sensor_gyro_pub->publish(sensor_gyro);
 
-		auto sensor_accel = px4_msgs::msg::SensorAccel();
-		sensor_accel.timestamp = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::steady_clock::now()).time_since_epoch().count();
-		sensor_accel.device_id = 1310988;
-		sensor_accel.x = libsimodel_Y.MavLinkSensorData.xacc;
-		sensor_accel.y = libsimodel_Y.MavLinkSensorData.yacc;
-		sensor_accel.z = libsimodel_Y.MavLinkSensorData.zacc;
-		sensor_accel.temperature = 30;
-		this->sensor_accel_pub->publish(sensor_accel);
+		// auto sensor_accel = px4_msgs::msg::SensorAccel();
+		// sensor_accel.timestamp = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::steady_clock::now()).time_since_epoch().count();
+		// sensor_accel.device_id = 1310988;
+		// sensor_accel.x = libsimodel_Y.MavLinkSensorData.xacc;
+		// sensor_accel.y = libsimodel_Y.MavLinkSensorData.yacc;
+		// sensor_accel.z = libsimodel_Y.MavLinkSensorData.zacc;
+		// sensor_accel.temperature = 30;
+		// this->sensor_accel_pub->publish(sensor_accel);
 
-		auto sensor_mag = px4_msgs::msg::SensorMag();
-		sensor_mag.timestamp = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::steady_clock::now()).time_since_epoch().count();
-		sensor_mag.device_id = 197388;
-		sensor_mag.x = libsimodel_Y.MavLinkSensorData.xmag;
-		sensor_mag.y = libsimodel_Y.MavLinkSensorData.ymag;
-		sensor_mag.z = libsimodel_Y.MavLinkSensorData.zmag;
-		sensor_mag.temperature = 30;
-		this->sensor_mag_pub->publish(sensor_mag);
+		// auto sensor_mag = px4_msgs::msg::SensorMag();
+		// sensor_mag.timestamp = std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::steady_clock::now()).time_since_epoch().count();
+		// sensor_mag.device_id = 197388;
+		// sensor_mag.x = libsimodel_Y.MavLinkSensorData.xmag;
+		// sensor_mag.y = libsimodel_Y.MavLinkSensorData.ymag;
+		// sensor_mag.z = libsimodel_Y.MavLinkSensorData.zmag;
+		// sensor_mag.temperature = 30;
+		// this->sensor_mag_pub->publish(sensor_mag);
+
+		auto hil_sensor = mavros_msgs::msg::HilSensor();
+		hil_sensor.header.frame_id = "sim_model";
+		hil_sensor.header.stamp = this->get_clock()->now();
+
+		hil_sensor.acc.x = libsimodel_Y.MavLinkSensorData.xacc;
+		hil_sensor.acc.y = libsimodel_Y.MavLinkSensorData.yacc;
+		hil_sensor.acc.z = -libsimodel_Y.MavLinkSensorData.zacc;
+		hil_sensor.fields_updated |= 0b111;
+
+		hil_sensor.gyro.x = libsimodel_Y.MavLinkSensorData.xgyro;
+		hil_sensor.gyro.y = libsimodel_Y.MavLinkSensorData.ygyro;
+		hil_sensor.gyro.z = libsimodel_Y.MavLinkSensorData.zgyro;
+		hil_sensor.fields_updated |= 0b111000;
+
+		hil_sensor.mag.x = libsimodel_Y.MavLinkSensorData.xmag*1e-4;
+		hil_sensor.mag.y = libsimodel_Y.MavLinkSensorData.ymag*1e-4;
+		hil_sensor.mag.z = -libsimodel_Y.MavLinkSensorData.zmag*1e-4;
+		hil_sensor.fields_updated |= 0b111000000;
+
+		hil_sensor.abs_pressure = libsimodel_Y.MavLinkSensorData.abs_pressure*1e4;
+		hil_sensor.pressure_alt = libsimodel_Y.MavLinkSensorData.pressure_alt;
+		hil_sensor.temperature = libsimodel_Y.MavLinkSensorData.temperature;
+		hil_sensor.fields_updated |= 0b1101000000000;
+		
+		this->hil_sensor_pub->publish(hil_sensor);
 
 	}
 
